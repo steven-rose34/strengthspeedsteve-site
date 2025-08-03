@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Strength Speed Steve | Blog</title>
   <link rel="stylesheet" href="style.css">
-  <!-- External libraries for parsing front matter and markdown -->
-  <script src="https://cdn.jsdelivr.net/npm/gray-matter@4.0.3/dist/gray-matter.min.js"></script>
+  <!-- External library for Markdown parsing -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
@@ -37,6 +36,7 @@
   </aside>
   <script>
     // Replace these placeholders with your GitHub username and repository name once the repo is created
+    // Set your GitHub username and repository name
     const owner = 'steven-rose34';
     const repo = 'strengthspeedsteve-site';
 
@@ -44,6 +44,39 @@
      * Fetch the list of markdown files from the `posts` directory of the repository
      * and build the blog list. This uses the GitHub API and requires the repo to be public.
      */
+    /**
+     * Simple parser for front matter in markdown files.
+     * Extracts key‑value pairs between the first two '---' lines and
+     * returns an object with `front` (metadata) and `body` (markdown body).
+     */
+    function parseFrontMatter(content) {
+      const lines = content.split('\n');
+      let front = {};
+      if (lines[0].trim() === '---') {
+        let i = 1;
+        for (; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (line === '---') {
+            i++;
+            break;
+          }
+          const match = line.match(/^([^:]+):\s*(.*)$/);
+          if (match) {
+            const key = match[1].trim();
+            let value = match[2].trim();
+            // remove surrounding quotes if any
+            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+              value = value.slice(1, -1);
+            }
+            front[key] = value;
+          }
+        }
+        const body = lines.slice(i).join('\n');
+        return { front, body };
+      }
+      return { front: {}, body: content };
+    }
+
     async function fetchPosts() {
       const postsContainer = document.getElementById('posts');
       try {
@@ -59,8 +92,8 @@
             const slug = file.name.replace(/\.md$/, '');
             const rawRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/posts/${file.name}`);
             const rawContent = await rawRes.text();
-            const parsed = matter(rawContent);
-            posts.push({ slug, front: parsed.data, body: parsed.content });
+            const { front, body } = parseFrontMatter(rawContent);
+            posts.push({ slug, front, body });
           }
         }
         // Sort posts by date descending
