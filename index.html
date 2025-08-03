@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strength Speed Steve | Blog</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- External libraries for parsing front matter and markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/gray-matter@4.0.3/dist/gray-matter.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Strength Speed Steve</h1>
+  </header>
+  <main id="posts">
+    <!-- Blog posts will be injected here -->
+  </main>
+  <aside>
+    <h2>Subscribe to the Newsletter</h2>
+    <!-- Netlify form for email subscription -->
+    <form name="subscribe" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/thank-you.html">
+      <input type="hidden" name="form-name" value="subscribe">
+      <p style="display:none">
+        <!-- This input is used by Netlify to prevent bots -->
+        <label>Don’t fill this out if you’re human: <input name="bot-field"></label>
+      </p>
+      <input type="email" name="email" placeholder="Your email" required>
+      <button type="submit">Sign Up</button>
+    </form>
+    <h2>Follow Me</h2>
+    <div id="social">
+      <a href="https://www.instagram.com/USERNAME_PLACEHOLDER/" target="_blank">Instagram</a>
+      <br>
+      <a href="https://x.com/USERNAME_PLACEHOLDER" target="_blank">X (Twitter)</a>
+    </div>
+  </aside>
+  <script>
+    // Replace these placeholders with your GitHub username and repository name once the repo is created
+    const owner = 'OWNER_PLACEHOLDER';
+    const repo = 'REPO_PLACEHOLDER';
+
+    /**
+     * Fetch the list of markdown files from the `posts` directory of the repository
+     * and build the blog list. This uses the GitHub API and requires the repo to be public.
+     */
+    async function fetchPosts() {
+      const postsContainer = document.getElementById('posts');
+      try {
+        const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/posts?ref=main`);
+        if (!listRes.ok) {
+          throw new Error('Failed to list posts. Ensure the repository is public and the placeholders are replaced.');
+        }
+        const files = await listRes.json();
+        const posts = [];
+        for (const file of files) {
+          // We only care about markdown files
+          if (file.name.endsWith('.md')) {
+            const slug = file.name.replace(/\.md$/, '');
+            const rawRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/posts/${file.name}`);
+            const rawContent = await rawRes.text();
+            const parsed = matter(rawContent);
+            posts.push({ slug, front: parsed.data, body: parsed.content });
+          }
+        }
+        // Sort posts by date descending
+        posts.sort((a, b) => new Date(b.front.date) - new Date(a.front.date));
+        // Render posts
+        posts.forEach(post => {
+          const article = document.createElement('article');
+          article.innerHTML = `
+            <h2><a href="post.html?slug=${post.slug}">${post.front.title}</a></h2>
+            <p><em>${new Date(post.front.date).toLocaleDateString()}</em></p>
+            <p>${post.front.description || ''}</p>
+          `;
+          postsContainer.appendChild(article);
+        });
+      } catch (err) {
+        console.error(err);
+        postsContainer.innerHTML = '<p>There was an error loading blog posts. Once the repository is set up and the placeholders are replaced, posts will appear here.</p>';
+      }
+    }
+
+    // Initialize blog listing
+    fetchPosts();
+  </script>
+</body>
+</html>
