@@ -5,27 +5,39 @@ backend:
 media_folder: "images/uploads"
 public_folder: "/images/uploads"
 
-publish_mode: editorial_workflow
-
 collections:
-  # Blog posts collection
-  - name: "blog"
-    label: "Blog"
-    folder: "posts"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Publish Date", name: "date", widget: "datetime" }
-      - { label: "Description", name: "description", widget: "text", required: false }
-      - { label: "Body", name: "body", widget: "markdown" }
-  # Subscribe page (optional) if you want to manage the thanks page via CMS
-  - name: "pages"
-    label: "Pages"
+  - name: "site-content"
+    label: "Blog & Books"
     files:
-      - file: "thank-you.html"
-        label: "Thank You"
-        name: "thankyou"
+      - name: "posts"
+        label: "Blog Posts"
+        file: "posts.json"
+        description: "Add, edit, or reorder the posts on your blog. Newest post: put it at the TOP of the list."
         fields:
-          - { label: "Title", name: "title", widget: "string" }
-          - { label: "Body", name: "body", widget: "markdown" }
+          - label: "Posts"
+            name: "posts"
+            widget: "list"
+            summary: "{{fields.date}} - {{fields.title}}"
+            fields:
+              - { label: "Post key (lowercase, no spaces, e.g. new-post)", name: "key", widget: "string" }
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Category", name: "category", widget: "string", default: "Training" }
+              - { label: "Date (e.g. November 8, 2026)", name: "date", widget: "string" }
+              - { label: "Short summary (shows on the blog card)", name: "excerpt", widget: "text", required: false }
+              - { label: "Photo", name: "img", widget: "image", required: false }
+              - { label: "Photo description", name: "alt", widget: "string", required: false }
+              - { label: "Post text - write normally, blank line between paragraphs, start a line with ## for a heading", name: "body", widget: "text", required: false }
+      - name: "books"
+        label: "Book Recommendations"
+        file: "books.json"
+        description: "Add the books you recommend - they appear in the Books section of the site."
+        fields:
+          - label: "Books"
+            name: "books"
+            widget: "list"
+            summary: "{{fields.title}} - {{fields.author}}"
+            fields:
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Author", name: "author", widget: "string" }
+              - { label: "Why you recommend it", name: "note", widget: "text", required: false }
+              - { label: "Cover image (optional)", name: "cover", widget: "image", required: false }
