@@ -42,7 +42,7 @@ jobs:
               ("Outlive", "Peter Attia"),
               ("Can't Hurt Me", "David Goggins"),
               ("Never Finished", "David Goggins"),
-              ("The Art of Coaching", ""),
+              ("Conscious Coaching", "Brett Bartholomew"),
               ("12 Rules for Life", "Jordan B. Peterson"),
               ("Dopamine Nation", "Anna Lembke"),
               ("Chop Wood Carry Water", "Joshua Medcalf"),
@@ -52,7 +52,7 @@ jobs:
               ("The Story of Civilization III", "Will Durant"),
               ("The Story of Civilization IV", "Will Durant"),
               ("The Psychology of Money", "Morgan Housel"),
-              ("Cancel Me If You Can", ""),
+              ("Cancel Me If You Can", "Dave Portnoy"),
               ("Elon Musk", "Walter Isaacson"),
               ("Endurance", "Alfred Lansing"),
           ]
@@ -66,19 +66,18 @@ jobs:
           OLD_HERO = "SSS COMPLETE is a coach in your pocket: a full week of lifting, sprinting, and conditioning \u2014 written fresh every week and delivered in the TrainHeroic app. Open it, train it, log it."
           NEW_HERO = "SSS COMPLETE is a coach in your pocket: a full week of lifting, sprinting, and conditioning \u2014 planned out for you and delivered in the TrainHeroic app. Open it, train it, log it."
           OLD_CHECK = "Fresh programming written every week \u2014 never a recycled PDF"
-          NEW_CHECK = "Programming in progressive blocks \u2014 the core lifts repeat and build, so you get stronger at them week after week"
+          NEW_CHECK = "Programming planned in progressive blocks \u2014 every week builds on the last, so you keep progressing"
           OLD_LOG = "My own training, posted as I train it. Follow along and log every session in the app."
           NEW_LOG = "My own training, posted as I train it. Train alongside me and log every session in the app \u2014 let's build together."
           OLD_STEP2 = "Open today's session and follow it: lifts Mon / Wed / Fri, conditioning Tue / Thu, an optional run on Saturday."
           NEW_STEP2 = "Open today's session and follow it \u2014 every lift, set, and rep is already laid out for you."
           OLD_ABOUT = "SSS COMPLETE isn't a template \u2014 it's the way Steve coaches and trains himself: teach the lifts properly, lift heavy, sprint, and repeat it long enough to get good at it. He has coached athletes from age 8 to 80, and he still trains the same way he asks his athletes to. Join the team, and you train the way he does."
           NEW_ABOUT = "He's currently an Assistant Performance Coach at Princeton University. Before that, he was a high school strength & conditioning coach and a personal trainer, and over his career he's worked with everyone between the ages of 8 and 80. His coaching is simple: teach the lifts properly, lift heavy, sprint, and repeat it long enough to get good at it. SSS COMPLETE puts that coaching in the TrainHeroic app \u2014 join the team, and you train the way he does."
-          KEEP_ABOUT = "Steve Rose, M.S., CSCS \u2014 Assistant Performance Coach at Princeton University."
+          KEEP_ABOUT_RE = re.compile(r"Steve Rose, M\.S\., CSCS(?:\s|<[^>]+>|&mdash;|&#8212;|&nbsp;|\u2014|\u2013|-)*Assistant Performance Coach at Princeton University\.?", re.S)
           check(s, OLD_HERO, 1, "old hero sentence")
           check(s, OLD_CHECK, 1, "old checklist item")
           check(s, OLD_LOG, 1, "old log pitch")
           check(s, OLD_STEP2, 1, "old step 2 body")
-          check(s, KEEP_ABOUT, 1, "kept about line")
           assert "Welcome to Strength Speed Steve" in s, "welcome post title missing from index.html"
           assert "Welcome to Strength Speed Steve" in posts_txt, "welcome post title missing from posts.json"
           assert "Speed Training 101" in s, "speed post title missing from index.html"
@@ -90,11 +89,22 @@ jobs:
           assert books_cur.get("books") == [], "books.json must start with an empty books list"
           check(s, "const FALLBACK_POSTS =", 1, "FALLBACK_POSTS marker")
           check(s, "const FALLBACK_BOOKS =", 1, "FALLBACK_BOOKS marker")
-          about_count = s.count(OLD_ABOUT)
-          assert about_count in (0, 1), f"old about paragraph: expected 0 or 1, found {about_count}"
-          about_para = re.compile(r"(<p[^>]*>)SSS COMPLETE isn't a template.*?(</p>)", re.S)
+          fb_idx = s.index("const FALLBACK_POSTS =")
+          head = s[:fb_idx]
+          for m in re.finditer(r"CSCS", head):
+              print("CSCS_CTX:", repr(head[max(0, m.start() - 60):m.end() + 160]))
+          keep_head = KEEP_ABOUT_RE.findall(head)
+          keep_all = KEEP_ABOUT_RE.findall(s)
+          print("KEEP_ABOUT head/all:", len(keep_head), len(keep_all))
+          assert len(keep_head) == 1, "kept about line: expected 1 in page body, found " + str(len(keep_head)) + " (whole file: " + str(len(keep_all)) + ")"
+          for m in re.finditer(r"a template", head):
+              print("TEMPLATE_CTX:", repr(head[max(0, m.start() - 200):m.end() + 200]))
+          about_count = head.count(OLD_ABOUT)
+          assert about_count in (0, 1), f"old about paragraph in page body: expected 0 or 1, found {about_count}"
+          paras = re.findall(r"<p[^>]*>.*?</p>", head, flags=re.S)
+          about_paras = [p for p in paras if "SSS COMPLETE" in p and "template" in p]
           if about_count == 0:
-              assert len(about_para.findall(s)) == 1, "old about paragraph not found as a single <p> block"
+              assert len(about_paras) == 1, "old about paragraph not found as a single <p> block in page body"
           def array_span(text, marker):
               idx = text.index(marker)
               start = text.index("[", idx)
@@ -128,15 +138,19 @@ jobs:
           def extract_array(text, marker):
               a, b = array_span(text, marker)
               return text[a:b + 1]
-          s2 = s.replace(OLD_HERO, NEW_HERO)
+          if about_count == 1:
+              head2 = head.replace(OLD_ABOUT, NEW_ABOUT)
+          else:
+              old_para = about_paras[0]
+              new_para = re.sub(r"(<p[^>]*>).*?(</p>)", lambda m: m.group(1) + NEW_ABOUT + m.group(2), old_para, count=1, flags=re.S)
+              assert new_para != old_para, "about paragraph replacement failed"
+              assert head.count(old_para) == 1, "old about paragraph not found exactly once in page body"
+              head2 = head.replace(old_para, new_para, 1)
+          s2 = head2 + s[len(head):]
+          s2 = s2.replace(OLD_HERO, NEW_HERO)
           s2 = s2.replace(OLD_CHECK, NEW_CHECK)
           s2 = s2.replace(OLD_LOG, NEW_LOG)
           s2 = s2.replace(OLD_STEP2, NEW_STEP2)
-          if about_count == 1:
-              s2 = s2.replace(OLD_ABOUT, NEW_ABOUT)
-          else:
-              s2, nsub = about_para.subn(lambda m: m.group(1) + NEW_ABOUT + m.group(2), s2, count=1)
-              assert nsub == 1, "about paragraph replacement failed"
           s2 = replace_array(s2, "const FALLBACK_POSTS =", "[]")
           s2 = replace_array(s2, "const FALLBACK_BOOKS =", books_js)
           assert "written fresh every week" not in s2, "old hero wording still present"
@@ -148,7 +162,7 @@ jobs:
           check(s2, NEW_LOG, 1, "new log pitch")
           check(s2, NEW_STEP2, 1, "new step 2 body")
           check(s2, NEW_ABOUT, 1, "new about paragraph")
-          check(s2, KEEP_ABOUT, 1, "kept about line after patch")
+          assert len(KEEP_ABOUT_RE.findall(s2)) == 1, "kept about line missing after patch"
           check(s2, "Start Training on TrainHeroic", 3, "TrainHeroic buttons")
           assert "$30" in s2, "price $30 missing"
           assert "$15" in s2, "price $15 missing"
