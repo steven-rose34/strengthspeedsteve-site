@@ -1,0 +1,21 @@
+name: Restore index.html
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore index.html from 62e1dda
+        run: |
+          git config user.name "steven-rose34"
+          git config user.email "steven-rose34@users.noreply.github.com"
+          git checkout 62e1dda6ea2fd9bce1f32682730693e538a8b87c -- index.html
+          ls -l index.html
+          git status --short
+          git commit -m "Restore index.html from 62e1dda"
+          git push
