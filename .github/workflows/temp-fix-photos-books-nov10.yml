@@ -12,7 +12,6 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, pathlib, re
-
           html_p = pathlib.Path("index.html")
           books_p = pathlib.Path("books.json")
           posts_p = pathlib.Path("posts.json")
@@ -64,257 +63,231 @@ jobs:
               c = text.count(sub)
               assert c == n, f"{label}: expected {n}, found {c}"
 
-          def array_span(text, marker_idx):
-              start = text.index("[", marker_idx)
+          def find_book_marker(text):
+              found = []
+              for pat in (r"var BOOKS\s*=", r"const FALLBACK_BOOKS\s*="):
+                  for m in re.finditer(pat, text):
+                      found.append(m)
+              assert len(found) == 1, f"embedded book array marker must appear exactly once, found {len(found)}"
+              return found[0].start()
+
+          def parse_book_array(text, marker_idx):
+              start = text.find("[", marker_idx)
+              assert start >= 0, "book array open bracket not found"
               depth = 0
-              quote = None
+              in_str = False
               esc = False
               i = start
               while i < len(text):
                   ch = text[i]
-                  if quote:
+                  if in_str:
                       if esc:
                           esc = False
                       elif ch == "\\":
                           esc = True
-                      elif ch == quote:
-                          quote = None
+                      elif ch == '"':
+                          in_str = False
                   else:
-                      if ch in ("'", '"', "`"):
-                          quote = ch
+                      if ch == '"':
+                          in_str = True
                       elif ch == "[":
                           depth += 1
                       elif ch == "]":
                           depth -= 1
                           if depth == 0:
-                              return start, i
+                              raw = text[start:i + 1]
+                              clean = re.sub(r"/\*.*?\*/", "", raw, flags=re.S)
+                              lines = [ln for ln in clean.splitlines() if not ln.strip().startswith("//")]
+                              return json.loads("\n".join(lines)), start, i + 1
                   i += 1
-              raise AssertionError("array end not found")
-
-          def parse_book_array(text, marker_idx):
-              a, b = array_span(text, marker_idx)
-              raw = text[a:b + 1]
-              lines = [ln for ln in raw.splitlines() if not ln.strip().startswith("//")]
-              return json.loads("\n".join(lines))
+              raise AssertionError("book array end not found")
 
           def books_section_of(text):
-              i = text.index('id="books"')
-              o = text.rfind("<section", 0, i)
-              c = text.index("</section>", o) + len("</section>")
-              return text[o:c]
+              m = re.search(r'<section[^>]*\bid="books"[^>]*>.*?</section>', text, flags=re.S)
+              assert m, "books section not found"
+              return m.group(0)
 
-          def find_book_marker(text):
-              found = []
-              for pat in (r"var BOOKS\s*=", r"const FALLBACK_BOOKS\s*="):
-                  m = re.search(pat, text)
-                  if m:
-                      found.append(m)
-              assert len(found) == 1, "embedded book array marker must appear exactly once"
-              return found[0]
-
-          def norm_books(lst):
-              out = []
-              for b in lst:
-                  if not isinstance(b, dict):
-                      raise AssertionError("book entries must be objects")
-                  out.append({"title": b.get("title"), "author": b.get("author"), "note": b.get("note", "")})
-              return out
+          def books_view_of(text):
+              m = re.search(r'<section[^>]*\bid="books-view"[^>]*>.*?</section>', text, flags=re.S)
+              assert m, "books view section not found"
+              return m.group(0)
 
           check(s, "Start Training on TrainHeroic", 3, "TrainHeroic buttons")
-          assert "$30" in s, "price $30 missing"
-          assert "$15" in s, "price $15 missing"
-          assert "identity.netlify.com" in s, "Netlify Identity wiring missing"
-          assert "netlifyIdentity" in s, "Netlify Identity wiring missing"
+          assert "$30" in s and "$15" in s, "expected prices missing"
+          assert "identity.netlify.com" in s and "netlifyIdentity" in s, "Netlify Identity wiring missing"
           assert "</html>" in s, "closing html tag missing"
-          check(s, "</style>", 1, "style close tag")
-          check(s, "</body>", 1, "body close tag")
           check(s, "<figure", 3, "homepage figures")
-          check(s, "405 LB BACK SQUAT", 1, "hero caption")
-          check(s, "255 LB CLEAN", 1, "training banner caption")
-          check(s, "185 LB SNATCH", 1, "about caption")
-          check(s, 'id="books"', 1, "books section id")
-          assert s.count("Steve's bookshelf") in (1, 2), "books heading count wrong"
-          check(s, "Books Steve recommends", 1, "books intro")
-          check(s, 'id="book-list"', 1, "book list container")
-          assert "Welcome to Strength Speed Steve" in s, "blog post 1 missing"
-          assert "Speed Training 101" in s, "blog post 2 missing"
+          check(s, "<figcaption>405 lb back squat</figcaption>", 1, "hero caption")
+          check(s, "<figcaption>255 lb clean</figcaption>", 1, "training banner caption")
+          check(s, "<figcaption>185 lb snatch</figcaption>", 1, "about caption")
+          check(s, 'class="hero-photo"', 1, "hero figure class")
+          check(s, 'class="media training-media-wide"', 1, "training banner figure class")
+          check(s, 'class="media"', 1, "about figure class")
+          assert s.count("Steve's bookshelf") in (1, 2), "books heading count unexpected"
+          assert "Books Steve recommends" in s, "books intro missing"
+          assert "Welcome to Strength Speed Steve" in s, "first blog post missing"
+          assert "Speed Training 101" in s, "second blog post missing"
           assert 'fetch("posts.json"' in s, "blog loader missing"
-          assert 'fetch("books.json"' in s, "books loader missing"
+          assert 'fetch("books.json"' in s, "book loader missing"
+          check(s, 'id="books"', 1, "books section id")
+          check(s, 'id="bookGrid"', 1, "book grid container")
+          check(s, 'id="bookEmpty"', 1, "book empty container")
 
-          marker = find_book_marker(s)
-          embedded = parse_book_array(s, marker.start())
+          embedded, _es, _ee = parse_book_array(s, find_book_marker(s))
           assert isinstance(embedded, list), "embedded books must be a list"
-          if embedded and len(embedded) != 33:
-              raise AssertionError(f"embedded books: expected 0 or 33, found {len(embedded)}")
+          for b in embedded:
+              assert isinstance(b, dict) and b.get("title") and b.get("author"), "book entries must be objects with title and author"
+          assert len(embedded) in (0, 33), f"embedded books: expected 0 or 33, found {len(embedded)}"
           books_data = json.loads(books_txt)
-          assert isinstance(books_data, dict) and isinstance(books_data.get("books"), list), "books.json must hold a books list"
+          assert isinstance(books_data, dict) and isinstance(books_data.get("books"), list), "books.json must be an object with a books list"
           json_books = books_data["books"]
-          if json_books and len(json_books) != 33:
-              raise AssertionError(f"books.json: expected 0 or 33, found {len(json_books)}")
-          seeded = False
-          if len(json_books) == 33:
-              canonical = json_books
-              if embedded and [b.get("title") for b in embedded] != [b.get("title") for b in canonical]:
-                  raise AssertionError("embedded books and books.json disagree on titles")
-              if embedded and [b.get("author") for b in embedded] != [b.get("author") for b in canonical]:
-                  raise AssertionError("embedded books and books.json disagree on authors")
+          for b in json_books:
+              assert isinstance(b, dict) and b.get("title") and b.get("author"), "books.json entries must be objects with title and author"
+          assert len(json_books) in (0, 33), f"books.json: expected 0 or 33, found {len(json_books)}"
+          if len(embedded) == 33 and len(json_books) == 33:
+              assert [(b["title"], b["author"]) for b in embedded] == [(b["title"], b["author"]) for b in json_books], "embedded and books.json book lists disagree"
+              canonical = embedded
+              print("book data already has 33 entries on both sides; using them")
           elif len(embedded) == 33:
               canonical = embedded
+              print("books.json empty: syncing it from the embedded list")
+          elif len(json_books) == 33:
+              canonical = json_books
+              print("embedded book list empty: syncing it from books.json")
           else:
               canonical = SEED
-              seeded = True
-              print("SEED: no 33-book data in the site yet; seeding the canonical 33-book list")
-          assert len(canonical) == 33, "canonical book list must be 33"
-          assert all(isinstance(b, dict) and b.get("title") and b.get("author") for b in canonical), "every book needs a title and author"
+              print("SEED: book data empty in both index.html and books.json; seeding the canonical 33 books")
+          for b in canonical:
+              assert b.get("title") and b.get("author"), "every book needs a title and an author"
           assert len({b["title"] for b in canonical}) == 33, "book titles must be unique"
-          if seeded:
-              assert [b["title"] for b in canonical] == [t for t, a in BOOKS_33], "seeded titles wrong"
-              assert [b["author"] for b in canonical] == [a for t, a in BOOKS_33], "seeded authors wrong"
-          print("book data OK: 33 entries (seeded)" if seeded else "book data OK: 33 entries")
-
+          assert len(canonical) == 33, "canonical book list must have exactly 33 entries"
+          canonical = [{"title": b["title"], "author": b["author"], "note": b.get("note", "")} for b in canonical]
           home0 = books_section_of(s)
           for b in canonical:
-              assert b["title"] not in home0, "book title in homepage books section before patch: " + b["title"]
+              assert b["title"] not in home0, "book title in the homepage books section before patch: " + b["title"]
+          books_out = json.dumps({"books": canonical}, indent=2) + "\n"
 
           s2 = s
-          books_json_out = json.dumps({"books": norm_books(canonical)}, ensure_ascii=False, indent=2) + "\n"
+          _emb, a_start, a_end = parse_book_array(s2, find_book_marker(s2))
+          new_arr = "[\n" + ",\n".join("  " + json.dumps(b) for b in canonical) + "\n]"
+          s2 = s2[:a_start] + new_arr + s2[a_end:]
 
-          if norm_books(embedded) != norm_books(canonical):
-              mark2 = find_book_marker(s2)
-              a, b = array_span(s2, mark2.start())
-              s2 = s2[:a] + json.dumps(norm_books(canonical), ensure_ascii=False, indent=2) + s2[b + 1:]
-              print("embedded book array updated to the 33 books")
-          else:
-              print("embedded book array already holds the 33 books")
-
-          CSS_BLOCK = """
-          /* Figure centering fix (Nov 10): every homepage photo/video figure is centered in its container at desktop and mobile widths, and each caption is centered under its media. */
-          figure.hero-photo, figure.media { margin-inline: auto; width: 100%; max-width: 100%; }
-          figure.hero-photo figcaption, figure.media figcaption { text-align: center; }
-          /* Books view (Nov 10): separate full-page view, hidden until the browse button is clicked. */
-          #books-view { display: none; }
-          body.books-open #books-view { display: block; }
-          body.books-open main > section:not(#books-view) { display: none; }
-          body.books-open footer { display: none; }
-          .books-back { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 10px 18px; border-radius: 999px; border: 2px solid var(--ink); background: transparent; color: var(--ink); font-size: 15px; font-weight: 800; cursor: pointer; margin-bottom: 20px; }
-          .books-back:hover { border-color: var(--accent); color: var(--accent); }
+          assert s2.count("</style>") == 1, "expected exactly one </style>"
+          CSS_FIX = """
+            /* Figure centering fix (Nov 10): every homepage photo/video figure is centered in its container at desktop and mobile widths, and each caption is centered under its media. */
+            figure.hero-photo, figure.media{margin-inline:auto;width:100%;max-width:100%}
+            figure.hero-photo figcaption, figure.media figcaption{text-align:center}
+            /* Books view (Nov 10): a dedicated full-page view for the complete bookshelf. */
+            #books-view{display:none}
+            body.books-open #books-view{display:block}
+            body.books-open main>section:not(#books-view){display:none}
+            body.books-open footer{display:none}
+            .books-back{margin-bottom:18px}
           """
-          if "Figure centering fix (Nov 10)" not in s2:
-              s2 = s2.replace("</style>", CSS_BLOCK + "</style>", 1)
-              print("figure-centering and books-view CSS added")
+          s2 = s2.replace("</style>", CSS_FIX + "</style>", 1)
 
           BROWSE_BTN = '<button class="btn btn-red" id="browse-books" type="button">Browse the Bookshelf</button>'
-          m = re.search(r'<div[^>]*\bid="book-list"[^>]*>.*?</div>', s2, flags=re.S)
-          assert m, "book-list div not found"
-          book_list_div = m.group(0)
-          assert all(b["title"] not in book_list_div for b in canonical), "a book title is inside the static book-list div"
-          if 'id="browse-books"' not in s2:
-              s2 = s2.replace(book_list_div, BROWSE_BTN, 1)
-              print("homepage books section now shows only the browse button")
-          if 'id="books-view"' not in s2:
-              sec_i = s2.index('id="books"')
-              sec_o = s2.rfind("<section", 0, sec_i)
-              sec_c = s2.index("</section>", sec_o) + len("</section>")
-              view = """
-            <section class="section books-view" id="books-view" aria-labelledby="books-view-heading">
-              <div class="wrap">
-                <button class="btn books-back" id="books-back" type="button">&larr; Back to the homepage</button>
-                <h2 id="books-view-heading" tabindex="-1">Steve's bookshelf</h2>
-                <p class="section-intro">The complete bookshelf &mdash; every book Steve recommends, and what he took from each one.</p>
-                __BOOK_LIST_DIV__
-              </div>
-            </section>"""
-              view = view.replace("__BOOK_LIST_DIV__", book_list_div)
-              s2 = s2[:sec_c] + view + s2[sec_c:]
-              print("dedicated books view added after the books section")
+          BOOKS_VIEW = """<section class="block slim books-view" id="books-view" aria-labelledby="books-view-heading">
+            <div class="wrap">
+              <button class="btn btn-red books-back" id="books-back" type="button">&larr; Back to the homepage</button>
+              <h2 id="books-view-heading" tabindex="-1">Steve's bookshelf</h2>
+              <p>The complete bookshelf — every book Steve recommends, and what he took from each one.</p>
+              <div class="book-grid" id="bookGrid"></div>
+              <div id="bookEmpty"></div>
+            </div>
+          </section>"""
+          home_cur = books_section_of(s2)
+          assert s2.count(home_cur) == 1, "books section must occur exactly once"
+          assert "Steve's bookshelf" in home_cur and "Books Steve recommends" in home_cur, "books heading/intro missing"
+          GRID_DIV = '<div class="book-grid" id="bookGrid"></div>'
+          EMPTY_DIV = '<div id="bookEmpty"></div>'
+          assert home_cur.count(GRID_DIV) == 1 and home_cur.count(EMPTY_DIV) == 1, "book grid/empty divs missing from the books section"
+          home_new = home_cur.replace(GRID_DIV, "", 1).replace(EMPTY_DIV, "", 1)
+          INTRO_P = "<p>Books Steve recommends — and what he took from each one.</p>"
+          assert home_new.count(INTRO_P) == 1, "books intro paragraph must occur exactly once"
+          home_new = home_new.replace(INTRO_P, INTRO_P + "\n  " + BROWSE_BTN, 1)
+          print("homepage books section now shows only the browse button")
+          s2 = s2.replace(home_cur, home_new + "\n" + BOOKS_VIEW, 1)
 
-          TOGGLE_JS = """
-          <script>
-          // Books view toggle (Nov 10): the browse button opens the full books view; Back returns home.
-          (function () {
-            var openBtn = document.getElementById('browse-books');
-            var backBtn = document.getElementById('books-back');
-            var home = document.getElementById('books');
-            function openBooks() {
-              document.body.classList.add('books-open');
-              window.scrollTo(0, 0);
-              var h = document.getElementById('books-view-heading');
-              if (h) { try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); } }
-            }
-            function closeBooks() {
-              document.body.classList.remove('books-open');
-              if (home) { home.scrollIntoView(); }
-            }
-            if (openBtn) { openBtn.addEventListener('click', openBooks); }
-            if (backBtn) { backBtn.addEventListener('click', closeBooks); }
-            Array.prototype.forEach.call(document.querySelectorAll('a[href="#books"]'), function (a) {
-              a.addEventListener('click', function () { document.body.classList.remove('books-open'); });
-            });
-          })();
-          </script>
-          """
-          if "Books view toggle (Nov 10)" not in s2:
-              s2 = s2.replace("</body>", TOGGLE_JS + "</body>", 1)
-              print("books view toggle script added")
+          assert s2.count("</body>") == 1, "expected exactly one </body>"
+          TOGGLE_SCRIPT = """<script>
+            // Books view toggle (Nov 10): the browse button opens the full books view; Back returns home.
+            (function(){
+              var openBtn = document.getElementById('browse-books');
+              var backBtn = document.getElementById('books-back');
+              var heading = document.getElementById('books-view-heading');
+              function openBooks(){
+                document.body.classList.add('books-open');
+                window.scrollTo(0,0);
+                if(heading){ heading.focus({preventScroll:true}); }
+              }
+              function closeBooks(){
+                document.body.classList.remove('books-open');
+                var home = document.getElementById('books');
+                if(home){ home.scrollIntoView(); }
+              }
+              if(openBtn){ openBtn.addEventListener('click', openBooks); }
+              if(backBtn){ backBtn.addEventListener('click', closeBooks); }
+              document.querySelectorAll('a[href^="#"]').forEach(function(a){
+                a.addEventListener('click', function(){ document.body.classList.remove('books-open'); });
+              });
+            })();
+          </script>"""
+          s2 = s2.replace("</body>", TOGGLE_SCRIPT + "\n</body>", 1)
 
-          check(s2, "Start Training on TrainHeroic", 3, "TrainHeroic buttons after patch")
-          assert "$30" in s2, "price $30 missing after patch"
-          assert "$15" in s2, "price $15 missing after patch"
-          assert "identity.netlify.com" in s2, "Netlify Identity wiring missing after patch"
-          assert "netlifyIdentity" in s2, "Netlify Identity wiring missing after patch"
-          assert "</html>" in s2, "closing html tag missing after patch"
-          check(s2, "Figure centering fix (Nov 10)", 1, "centering CSS block")
-          check(s2, "Books view toggle (Nov 10)", 1, "toggle script")
           check(s2, "<figure", 3, "homepage figures after patch")
-          check(s2, "405 LB BACK SQUAT", 1, "hero caption after patch")
-          check(s2, "255 LB CLEAN", 1, "training banner caption after patch")
-          check(s2, "185 LB SNATCH", 1, "about caption after patch")
-          check(s2, 'class="hero-photo"', 1, "hero figure after patch")
-          check(s2, 'class="media training-media-wide"', 1, "training banner figure after patch")
+          check(s2, "<figcaption>405 lb back squat</figcaption>", 1, "hero caption after patch")
+          check(s2, "<figcaption>255 lb clean</figcaption>", 1, "training banner caption after patch")
+          check(s2, "<figcaption>185 lb snatch</figcaption>", 1, "about caption after patch")
+          check(s2, "figure.hero-photo, figure.media{margin-inline:auto", 1, "figure centering rule")
+          check(s2, "figure.hero-photo figcaption, figure.media figcaption{text-align:center}", 1, "caption centering rule")
+          check(s2, "Start Training on TrainHeroic", 3, "TrainHeroic buttons after patch")
+          assert "$30" in s2 and "$15" in s2, "prices changed"
+          assert "identity.netlify.com" in s2 and "netlifyIdentity" in s2, "Netlify Identity wiring changed"
+          assert "</html>" in s2, "closing html tag missing"
+          assert "Welcome to Strength Speed Steve" in s2, "first blog post missing"
+          assert "Speed Training 101" in s2, "second blog post missing"
+          assert 'fetch("posts.json"' in s2 and 'fetch("books.json"' in s2, "book/blog loader changed"
           check(s2, "Browse the Bookshelf", 1, "browse button")
-          check(s2, 'id="browse-books"', 1, "browse button id")
+          check(s2, "The complete bookshelf", 1, "books view intro")
           check(s2, 'id="books-view"', 1, "books view section")
-          check(s2, 'id="books-back"', 1, "books back button")
-          check(s2, 'id="book-list"', 1, "book list container after patch")
-          assert "books-open" in s2, "books view toggle wiring missing"
-          assert 'fetch("posts.json"' in s2, "blog loader missing after patch"
-          assert 'fetch("books.json"' in s2, "books loader missing after patch"
-          assert "Welcome to Strength Speed Steve" in s2, "blog post 1 missing after patch"
-          assert "Speed Training 101" in s2, "blog post 2 missing after patch"
+          check(s2, 'id="books-back"', 1, "back button")
+          check(s2, 'id="bookGrid"', 1, "book grid after patch")
+          check(s2, 'id="bookEmpty"', 1, "book empty after patch")
+          check(s2, 'id="browse-books"', 1, "browse button id")
+          check(s2, 'id="books-view-heading"', 1, "books view heading id")
+          check(s2, "#books-view{display:none}", 1, "books view hidden rule")
+          check(s2, "body.books-open #books-view{display:block}", 1, "books view open rule")
+          check(s2, "body.books-open main>section:not(#books-view){display:none}", 1, "books view hide-home rule")
+          check(s2, "body.books-open footer{display:none}", 1, "books view hide-footer rule")
+          check(s2, ".books-back{margin-bottom:18px}", 1, "back button spacing rule")
+          assert "getElementById('browse-books')" in s2, "browse button wiring missing"
+          assert "getElementById('books-back')" in s2, "back button wiring missing"
+          assert "getElementById('books-view-heading')" in s2, "books view heading wiring missing"
+          assert "classList.add('books-open')" in s2, "books view open wiring missing"
+          assert "classList.remove('books-open')" in s2, "books view close wiring missing"
+          check(s2, "</style>", 1, "closing style tag after patch")
+          check(s2, "</body>", 1, "closing body tag after patch")
           home = books_section_of(s2)
-          assert "Steve's bookshelf" in home, "books heading missing after patch"
-          assert "Books Steve recommends" in home, "books intro missing after patch"
-          assert "Browse the Bookshelf" in home, "browse button missing from books section"
-          assert 'id="book-list"' not in home, "book list still inside the homepage books section"
+          assert "Steve's bookshelf" in home and "Books Steve recommends" in home, "books heading/intro missing after patch"
+          assert "Browse the Bookshelf" in home, "browse button missing from the books section"
+          assert 'id="bookGrid"' not in home, "book grid still inside the homepage books section"
+          assert 'id="bookEmpty"' not in home, "book empty still inside the homepage books section"
           for b in canonical:
               assert b["title"] not in home, "book title still in the homepage books section: " + b["title"]
-          view_i = s2.index('id="books-view"')
-          view_o = s2.rfind("<section", 0, view_i)
-          view_c = s2.index("</section>", view_o) + len("</section>")
-          view = s2[view_o:view_c]
-          assert 'id="book-list"' in view, "book list missing from the books view"
+          view = books_view_of(s2)
+          assert 'id="bookGrid"' in view, "book grid missing from the books view"
+          assert 'id="bookEmpty"' in view, "book empty missing from the books view"
           assert "Back to the homepage" in view, "back control missing from the books view"
-          assert "Steve's bookshelf" in view, "books view heading missing"
-          mark3 = find_book_marker(s2)
-          embedded2 = parse_book_array(s2, mark3.start())
-          assert len(embedded2) == 33, "embedded books must be 33 after patch"
-          assert [b.get("title") for b in embedded2] == [b["title"] for b in canonical], "embedded titles wrong after patch"
-          assert [b.get("author") for b in embedded2] == [b["author"] for b in canonical], "embedded authors wrong after patch"
-          parsed_out = json.loads(books_json_out)
-          assert parsed_out["books"] and len(parsed_out["books"]) == 33, "books.json must hold 33 entries"
-          assert [b["title"] for b in parsed_out["books"]] == [b["title"] for b in canonical], "books.json titles wrong"
-          assert [b["author"] for b in parsed_out["books"]] == [b["author"] for b in canonical], "books.json authors wrong"
+          assert "The complete bookshelf" in view, "books view intro missing from the books view"
+          embedded2, _x, _y = parse_book_array(s2, find_book_marker(s2))
+          assert [(b["title"], b["author"]) for b in embedded2] == [(b["title"], b["author"]) for b in canonical], "embedded book list after patch is not the canonical 33"
+          books_after = json.loads(books_out)
+          assert len(books_after["books"]) == 33, "books.json must have exactly 33 entries"
+          assert [(b["title"], b["author"]) for b in books_after["books"]] == [(b["title"], b["author"]) for b in canonical], "books.json after patch is not the canonical 33"
 
-          if s2 != s:
-              html_p.write_text(s2, encoding="utf-8")
-              print("patched index.html")
-          else:
-              print("index.html unchanged (already patched)")
-          if books_txt != books_json_out:
-              books_p.write_text(books_json_out, encoding="utf-8")
-              print("patched books.json")
-          else:
-              print("books.json unchanged")
+          html_p.write_text(s2, encoding="utf-8")
+          books_p.write_text(books_out, encoding="utf-8")
           print("PATCH OK: figures centered, books view added, 33 books verified, prices and TrainHeroic buttons untouched")
           PY
       - name: Commit patch
