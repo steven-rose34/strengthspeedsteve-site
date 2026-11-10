@@ -8,180 +8,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch content
+      - name: Probe file structure
         run: |
           python3 - <<'PY'
-          import json, pathlib, re, sys
-          html_p = pathlib.Path("index.html")
-          posts_p = pathlib.Path("posts.json")
-          books_p = pathlib.Path("books.json")
-          assert html_p.exists(), "index.html missing - refusing to proceed"
-          assert posts_p.exists(), "posts.json missing"
-          assert books_p.exists(), "books.json missing"
-          s = html_p.read_text(encoding="utf-8")
-          posts_txt = posts_p.read_text(encoding="utf-8")
-          books_txt = books_p.read_text(encoding="utf-8")
-          BOOKS = [
-              ("How to Win Friends and Influence People", "Dale Carnegie"),
-              ("Confessions of an Economic Hit Man (3rd Edition)", "John Perkins"),
-              ("Never Split the Difference", "Chris Voss"),
-              ("The Fourth Turning", "William Strauss & Neil Howe"),
-              ("The Fourth Turning Is Here", "Neil Howe"),
-              ("The Intelligent Investor", "Benjamin Graham"),
-              ("The Sovereign Individual", "James Dale Davidson & William Rees-Mogg"),
-              ("Do Hard Things", "Steve Magness"),
-              ("Spark", "John J. Ratey"),
-              ("Broken Money", "Lyn Alden"),
-              ("The Other Wes Moore", "Wes Moore"),
-              ("Basic Economics (5th Edition)", "Thomas Sowell"),
-              ("The Richest Man in Babylon", "George S. Clason"),
-              ("1984", "George Orwell"),
-              ("Animal Farm", "George Orwell"),
-              ("Think Big and Kick Ass in Business and Life", "Donald J. Trump & Bill Zanker"),
-              ("The 4-Hour Workweek", "Timothy Ferriss"),
-              ("Outlive", "Peter Attia"),
-              ("Can't Hurt Me", "David Goggins"),
-              ("Never Finished", "David Goggins"),
-              ("Conscious Coaching", "Brett Bartholomew"),
-              ("12 Rules for Life", "Jordan B. Peterson"),
-              ("Dopamine Nation", "Anna Lembke"),
-              ("Chop Wood Carry Water", "Joshua Medcalf"),
-              ("Alone at Dawn", "Dan Schilling"),
-              ("The Story of Civilization I", "Will Durant"),
-              ("The Story of Civilization II", "Will Durant"),
-              ("The Story of Civilization III", "Will Durant"),
-              ("The Story of Civilization IV", "Will Durant"),
-              ("The Psychology of Money", "Morgan Housel"),
-              ("Cancel Me If You Can", "Dave Portnoy"),
-              ("Elon Musk", "Walter Isaacson"),
-              ("Endurance", "Alfred Lansing"),
-          ]
-          assert len(BOOKS) == 33, "book list must have exactly 33 entries"
-          books_data = [{"title": t, "author": a, "note": ""} for t, a in BOOKS]
-          books_json_text = json.dumps({"books": books_data}, ensure_ascii=False, indent=2) + "\n"
-          books_js = json.dumps(books_data, ensure_ascii=False, indent=2)
-          def check(text, sub, n, label):
-              c = text.count(sub)
-              assert c == n, f"{label}: expected {n}, found {c}"
-          OLD_HERO = "SSS COMPLETE is a coach in your pocket: a full week of lifting, sprinting, and conditioning \u2014 written fresh every week and delivered in the TrainHeroic app. Open it, train it, log it."
-          NEW_HERO = "SSS COMPLETE is a coach in your pocket: a full week of lifting, sprinting, and conditioning \u2014 planned out for you and delivered in the TrainHeroic app. Open it, train it, log it."
-          OLD_CHECK = "Fresh programming written every week \u2014 never a recycled PDF"
-          NEW_CHECK = "Programming planned in progressive blocks \u2014 every week builds on the last, so you keep progressing"
-          OLD_LOG = "My own training, posted as I train it. Follow along and log every session in the app."
-          NEW_LOG = "My own training, posted as I train it. Train alongside me and log every session in the app \u2014 let's build together."
-          OLD_STEP2 = "Open today's session and follow it: lifts Mon / Wed / Fri, conditioning Tue / Thu, an optional run on Saturday."
-          NEW_STEP2 = "Open today's session and follow it \u2014 every lift, set, and rep is already laid out for you."
-          OLD_ABOUT = "SSS COMPLETE isn't a template \u2014 it's the way Steve coaches and trains himself: teach the lifts properly, lift heavy, sprint, and repeat it long enough to get good at it. He has coached athletes from age 8 to 80, and he still trains the same way he asks his athletes to. Join the team, and you train the way he does."
-          NEW_ABOUT = "He's currently an Assistant Performance Coach at Princeton University. Before that, he was a high school strength & conditioning coach and a personal trainer, and over his career he's worked with everyone between the ages of 8 and 80. His coaching is simple: teach the lifts properly, lift heavy, sprint, and repeat it long enough to get good at it. SSS COMPLETE puts that coaching in the TrainHeroic app \u2014 join the team, and you train the way he does."
+          import pathlib, re
+          s = pathlib.Path("index.html").read_text(encoding="utf-8")
+          print("LEN", len(s))
+          for pat in ["FALLBACK", "fallback", "posts.json", "books.json"]:
+              ms = list(re.finditer(re.escape(pat), s))
+              print("PAT", pat, "count", len(ms))
+              for m in ms[:4]:
+                  print("  CTX:", repr(s[max(0, m.start() - 80):m.end() + 120]))
+          print("DECLS")
+          for m in re.finditer(r"(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=", s):
+              n = m.group(1)
+              if any(k in n.upper() for k in ("POST", "BOOK", "FALL", "DEFAULT", "EMBED")):
+                  print("  ", n, repr(s[m.start():m.start() + 100]))
+          print("FUNCS")
+          for m in re.finditer(r"function\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*\(", s):
+              n = m.group(1)
+              if any(k in n.lower() for k in ("post", "book", "render", "load")):
+                  print("  ", n)
+          print("CSCS")
+          for m in list(re.finditer(r"CSCS", s))[:4]:
+              print("  CTX:", repr(s[max(0, m.start() - 60):m.end() + 160]))
           KEEP_ABOUT_RE = re.compile(r"Steve Rose, M\.S\., CSCS(?:\s|<[^>]+>|&mdash;|&#8212;|&nbsp;|\u2014|\u2013|-)*Assistant Performance Coach at Princeton University\.?", re.S)
-          check(s, OLD_HERO, 1, "old hero sentence")
-          check(s, OLD_CHECK, 1, "old checklist item")
-          check(s, OLD_LOG, 1, "old log pitch")
-          check(s, OLD_STEP2, 1, "old step 2 body")
-          assert "Welcome to Strength Speed Steve" in s, "welcome post title missing from index.html"
-          assert "Welcome to Strength Speed Steve" in posts_txt, "welcome post title missing from posts.json"
-          assert "Speed Training 101" in s, "speed post title missing from index.html"
-          assert "Speed Training 101" in posts_txt, "speed post title missing from posts.json"
-          posts_data = json.loads(posts_txt)
-          assert isinstance(posts_data.get("posts"), list) and len(posts_data["posts"]) == 2, "posts.json must currently hold exactly 2 posts"
-          assert {p["title"] for p in posts_data["posts"]} == {"Welcome to Strength Speed Steve", "Speed Training 101"}, "posts.json titles do not match the two posts to remove"
-          books_cur = json.loads(books_txt)
-          assert books_cur.get("books") == [], "books.json must start with an empty books list"
-          check(s, "const FALLBACK_POSTS =", 1, "FALLBACK_POSTS marker")
-          check(s, "const FALLBACK_BOOKS =", 1, "FALLBACK_BOOKS marker")
-          fb_idx = s.index("const FALLBACK_POSTS =")
-          head = s[:fb_idx]
-          for m in re.finditer(r"CSCS", head):
-              print("CSCS_CTX:", repr(head[max(0, m.start() - 60):m.end() + 160]))
-          keep_head = KEEP_ABOUT_RE.findall(head)
-          keep_all = KEEP_ABOUT_RE.findall(s)
-          print("KEEP_ABOUT head/all:", len(keep_head), len(keep_all))
-          assert len(keep_head) == 1, "kept about line: expected 1 in page body, found " + str(len(keep_head)) + " (whole file: " + str(len(keep_all)) + ")"
-          for m in re.finditer(r"a template", head):
-              print("TEMPLATE_CTX:", repr(head[max(0, m.start() - 200):m.end() + 200]))
-          about_count = head.count(OLD_ABOUT)
-          assert about_count in (0, 1), f"old about paragraph in page body: expected 0 or 1, found {about_count}"
-          paras = re.findall(r"<p[^>]*>.*?</p>", head, flags=re.S)
-          about_paras = [p for p in paras if "SSS COMPLETE" in p and "template" in p]
-          if about_count == 0:
-              assert len(about_paras) == 1, "old about paragraph not found as a single <p> block in page body"
-          def array_span(text, marker):
-              idx = text.index(marker)
-              start = text.index("[", idx)
-              depth = 0
-              quote = None
-              esc = False
-              i = start
-              while i < len(text):
-                  ch = text[i]
-                  if quote:
-                      if esc:
-                          esc = False
-                      elif ch == "\\":
-                          esc = True
-                      elif ch == quote:
-                          quote = None
-                  else:
-                      if ch in ("'", '"', "`"):
-                          quote = ch
-                      elif ch == "[":
-                          depth += 1
-                      elif ch == "]":
-                          depth -= 1
-                          if depth == 0:
-                              return start, i
-                  i += 1
-              raise AssertionError("array end not found for " + marker)
-          def replace_array(text, marker, new_array_text):
-              a, b = array_span(text, marker)
-              return text[:a] + new_array_text + text[b + 1:]
-          def extract_array(text, marker):
-              a, b = array_span(text, marker)
-              return text[a:b + 1]
-          if about_count == 1:
-              head2 = head.replace(OLD_ABOUT, NEW_ABOUT)
-          else:
-              old_para = about_paras[0]
-              new_para = re.sub(r"(<p[^>]*>).*?(</p>)", lambda m: m.group(1) + NEW_ABOUT + m.group(2), old_para, count=1, flags=re.S)
-              assert new_para != old_para, "about paragraph replacement failed"
-              assert head.count(old_para) == 1, "old about paragraph not found exactly once in page body"
-              head2 = head.replace(old_para, new_para, 1)
-          s2 = head2 + s[len(head):]
-          s2 = s2.replace(OLD_HERO, NEW_HERO)
-          s2 = s2.replace(OLD_CHECK, NEW_CHECK)
-          s2 = s2.replace(OLD_LOG, NEW_LOG)
-          s2 = s2.replace(OLD_STEP2, NEW_STEP2)
-          s2 = replace_array(s2, "const FALLBACK_POSTS =", "[]")
-          s2 = replace_array(s2, "const FALLBACK_BOOKS =", books_js)
-          assert "written fresh every week" not in s2, "old hero wording still present"
-          assert "never a recycled PDF" not in s2, "old checklist wording still present"
-          assert "Welcome to Strength Speed Steve" not in s2, "welcome post title still present in index.html"
-          assert "Speed Training 101" not in s2, "speed post title still present in index.html"
-          check(s2, NEW_HERO, 1, "new hero sentence")
-          check(s2, NEW_CHECK, 1, "new checklist item")
-          check(s2, NEW_LOG, 1, "new log pitch")
-          check(s2, NEW_STEP2, 1, "new step 2 body")
-          check(s2, NEW_ABOUT, 1, "new about paragraph")
-          assert len(KEEP_ABOUT_RE.findall(s2)) == 1, "kept about line missing after patch"
-          check(s2, "Start Training on TrainHeroic", 3, "TrainHeroic buttons")
-          assert "$30" in s2, "price $30 missing"
-          assert "$15" in s2, "price $15 missing"
-          assert "identity.netlify.com" in s2, "Netlify Identity wiring missing"
-          assert "netlifyIdentity" in s2, "Netlify Identity wiring missing"
-          assert "</html>" in s2, "closing html tag missing"
-          assert json.loads(extract_array(s2, "const FALLBACK_POSTS =")) == [], "fallback posts must be empty"
-          fb_books = json.loads(extract_array(s2, "const FALLBACK_BOOKS ="))
-          assert len(fb_books) == 33, f"fallback books must be 33, found {len(fb_books)}"
-          assert [b["title"] for b in fb_books] == [t for t, a in BOOKS], "fallback book titles/order wrong"
-          assert [b["author"] for b in fb_books] == [a for t, a in BOOKS], "fallback book authors wrong"
-          new_posts_text = json.dumps({"posts": []}, ensure_ascii=False, indent=2) + "\n"
-          assert "Welcome to Strength Speed Steve" not in new_posts_text, "welcome title still in new posts.json"
-          assert "Speed Training 101" not in new_posts_text, "speed title still in new posts.json"
-          assert json.loads(books_json_text)["books"] and len(json.loads(books_json_text)["books"]) == 33, "books.json must hold 33 entries"
-          html_p.write_text(s2, encoding="utf-8")
-          posts_p.write_text(new_posts_text, encoding="utf-8")
-          books_p.write_text(books_json_text, encoding="utf-8")
-          print("patched index.html, posts.json and books.json OK")
+          print("KEEP_ABOUT count", len(KEEP_ABOUT_RE.findall(s)))
+          print("OLD_ABOUT count", s.count("SSS COMPLETE isn't a template"))
+          print("PROBE_DONE")
           PY
       - name: Commit patch
         run: |
