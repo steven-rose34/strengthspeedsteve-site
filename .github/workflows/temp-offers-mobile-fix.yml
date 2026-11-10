@@ -1,0 +1,80 @@
+name: Temp offers mobile fix
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Training offers weights and mobile compaction
+        run: |
+          python3 - <<'PY'
+          import pathlib, sys
+          p = pathlib.Path("index.html")
+          assert p.exists(), "index.html missing - refusing to proceed"
+          s = p.read_text(encoding="utf-8")
+          MARKER = "/* SSS offers weight-match + mobile compaction 2026-11-10 */"
+          if MARKER in s:
+              print("Patch already applied; nothing to do.")
+              sys.exit(0)
+          def check(text, sub, n, label):
+              c = text.count(sub)
+              assert c == n, f"{label}: expected {n}, found {c}"
+          check(s, "SSS Complete", 1, "SSS Complete card")
+          check(s, "SSS Training Log", 1, "SSS Training Log card")
+          check(s, "Start Training", 3, "Start Training buttons")
+          assert "$30" in s, "price $30 missing"
+          assert "$15" in s, "price $15 missing"
+          assert "7 days free" in s, "COMPLETE trial text missing"
+          a1 = ".offer-card-log .offer-sub{font-weight:600}"
+          a2 = ".offer-card-log .offer-list li{font-weight:600}"
+          assert a1 in s, "anchor 1 (log offer-sub 600) missing"
+          assert a2 in s, "anchor 2 (log offer-list 600) missing"
+          assert "</style>" in s, "</style> anchor missing"
+          s = s.replace(a1, ".offer-card-log .offer-sub{font-weight:400}")
+          s = s.replace(a2, ".offer-card-log .offer-list li{font-weight:400}")
+          assert a1 not in s and a2 not in s, "600 rules still present"
+          block = """/* SSS offers weight-match + mobile compaction 2026-11-10 */
+          .offer-card .offer-name,.offer-card-log .offer-name,.offer-card-featured .offer-name{font-weight:800}
+          .offer-card .offer-price,.offer-card-log .offer-price,.offer-card-featured .offer-price{font-weight:800}
+          .offer-card .offer-price span{font-weight:400}
+          .offer-card .offer-tag,.offer-card-log .offer-tag,.offer-card-featured .offer-tag{font-weight:800}
+          .offer-card .offer-sub,.offer-card-log .offer-sub,.offer-card-featured .offer-sub{font-weight:400}
+          .offer-card .offer-list li,.offer-card-log .offer-list li,.offer-card-featured .offer-list li{font-weight:400}
+          .offer-card .offer-list li::before{font-weight:800}
+          .offer-card .offer-cta .btn,.offer-card-log .offer-cta .btn,.offer-card-featured .offer-cta .btn{font-weight:800}
+          @media(max-width:860px){
+          #training{padding-top:40px;padding-bottom:40px}
+          #training .section-head{margin-bottom:18px}
+          .offers-grid{gap:14px}
+          .offer-card{padding:16px;gap:10px}
+          .offer-card .offer-tag{top:12px;right:12px}
+          .offer-card .offer-name{font-size:20px}
+          .offer-card .offer-price{font-size:28px}
+          .offer-card .offer-sub{font-size:15px;line-height:1.5}
+          .offer-card .offer-list{gap:7px}
+          .offer-card .offer-list li{font-size:14px;line-height:1.45}
+          .offer-card .offer-cta .btn{min-height:48px;padding:12px 20px}
+          }
+          """
+          assert "font-weight:600" not in block, "new block must not contain 600"
+          s = s.replace("</style>", block + "</style>", 1)
+          check(s, "SSS Complete", 1, "SSS Complete card after patch")
+          check(s, "SSS Training Log", 1, "SSS Training Log card after patch")
+          check(s, "Start Training", 3, "Start Training buttons after patch")
+          assert "$30" in s and "$15" in s, "prices changed by patch"
+          assert s.count(MARKER) == 1, "marker must appear exactly once"
+          assert s.count("</style>") == 1, "style tag count changed"
+          p.write_text(s, encoding="utf-8")
+          print("patched index.html OK")
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "steven-rose34"
+          git config user.email "steven-rose34@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Fix Training offers: match card font weights; compact stacked cards on mobile"
+          git push
