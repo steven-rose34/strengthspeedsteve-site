@@ -188,6 +188,33 @@ footer nav a:hover{text-decoration:underline}
 .offer-card-log .btn{margin-top:auto}
 .training-media-wide{margin-top:28px;width:100%}
 .training-media-wide video{height:auto}
+/* SSS offers weight-match + mobile compaction 2026-11-10 */
+.offer-card .offer-name,.offer-card-log .offer-name{font-weight:800}
+.offer-card .offer-badge,.offer-card-log .offer-badge{font-weight:800}
+.price-big,.offer-price{font-weight:800}
+.price-big span,.offer-price span{font-weight:400}
+.price-sub,.offer-sub{font-weight:400}
+.check-list li,.included li{font-weight:400}
+.check-list li::before,.included li::before{font-weight:900;color:var(--accent)}
+.offer-card .btn,.offer-card-log .btn{font-weight:800}
+.offer-price{font-size:46px;line-height:1;margin:0}
+.offer-price span{font-size:19px;color:var(--ink-soft)}
+.offer-sub{margin:6px 0 18px;color:var(--ink-soft);font-size:16px}
+.included{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:10px}
+.included li{display:flex;gap:10px;font-size:16.5px;align-items:flex-start}
+.included li::before{content:"✓";flex:none;font-size:17px;line-height:1.4}
+@media (max-width:859px){
+#training{padding-top:36px;padding-bottom:36px}
+#training .section-head{margin-bottom:16px}
+.offers-grid{gap:14px;margin-top:16px}
+.offer-card{padding:16px}
+.offer-card .offer-badge{top:-13px;right:14px}
+.price-big,.offer-price{font-size:38px}
+.price-sub,.offer-sub{margin-bottom:12px;font-size:15px;line-height:1.45}
+.check-list,.included{gap:7px;margin-bottom:16px}
+.check-list li,.included li{font-size:15px;line-height:1.45}
+.offer-micro{margin-top:10px}
+}
 </style>
 </head>
 <body>
