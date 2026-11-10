@@ -58,7 +58,8 @@ jobs:
           ]
           assert len(BOOKS) == 33, "book list must have exactly 33 entries"
           books_data = [{"title": t, "author": a, "note": "", "cover": ""} for t, a in BOOKS]
-          books_json_text = json.dumps({"books": books_data}, ensure_ascii=False, indent=2) + "\n"
+          books_json_data = [{"title": t, "author": a, "note": ""} for t, a in BOOKS]
+          books_json_text = json.dumps({"books": books_json_data}, ensure_ascii=False, indent=2) + "\n"
           def check(text, sub, n, label):
               c = text.count(sub)
               assert c == n, f"{label}: expected {n}, found {c}"
@@ -86,7 +87,7 @@ jobs:
           assert isinstance(posts_data.get("posts"), list) and len(posts_data["posts"]) == 2, "posts.json must currently hold exactly 2 posts"
           assert {p["title"] for p in posts_data["posts"]} == {"Welcome to Strength Speed Steve", "Speed Training 101"}, "posts.json titles do not match the two posts to remove"
           books_cur = json.loads(books_txt)
-          assert books_cur.get("books") == [], "books.json must start with an empty books list"
+          assert books_cur.get("books") == [] or books_cur.get("books") == books_json_data, "books.json has unexpected content"
           assert len(re.findall(r"(?:var|let|const)\s+ARTICLES\s*=\s*\{", s)) == 1, "ARTICLES declaration must be unique"
           check(s, "var BOOKS =", 1, "var BOOKS marker")
           about_count = s.count(OLD_ABOUT)
@@ -183,7 +184,7 @@ jobs:
           new_posts_text = json.dumps({"posts": []}, ensure_ascii=False, indent=2) + "\n"
           assert "Welcome to Strength Speed Steve" not in new_posts_text, "welcome title still in new posts.json"
           assert "Speed Training 101" not in new_posts_text, "speed title still in new posts.json"
-          assert len(json.loads(books_json_text)["books"]) == 33, "books.json must hold 33 entries"
+          assert json.loads(books_json_text)["books"] == books_json_data, "books.json must hold the 33 entries"
           html_p.write_text(s2, encoding="utf-8")
           posts_p.write_text(new_posts_text, encoding="utf-8")
           books_p.write_text(books_json_text, encoding="utf-8")
