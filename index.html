@@ -215,6 +215,16 @@ footer nav a:hover{text-decoration:underline}
 .check-list li,.included li{font-size:15px;line-height:1.45}
 .offer-micro{margin-top:10px}
 }
+
+  /* Figure centering fix (Nov 10): every homepage photo/video figure is centered in its container at desktop and mobile widths, and each caption is centered under its media. */
+  figure.hero-photo, figure.media{margin-inline:auto;width:100%;max-width:100%}
+  figure.hero-photo figcaption, figure.media figcaption{text-align:center}
+  /* Books view (Nov 10): a dedicated full-page view for the complete bookshelf. */
+  #books-view{display:none}
+  body.books-open #books-view{display:block}
+  body.books-open main>section:not(#books-view){display:none}
+  body.books-open footer{display:none}
+  .books-back{margin-bottom:18px}
 </style>
 </head>
 <body>
@@ -375,11 +385,21 @@ footer nav a:hover{text-decoration:underline}
         <p class="section-tag">Books</p>
         <h2>Steve's bookshelf</h2>
         <p>Books Steve recommends — and what he took from each one.</p>
+  <button class="btn btn-red" id="browse-books" type="button">Browse the Bookshelf</button>
       </div>
-      <div class="book-grid" id="bookGrid"></div>
-      <div id="bookEmpty"></div>
+      
+      
     </div>
   </section>
+<section class="block slim books-view" id="books-view" aria-labelledby="books-view-heading">
+  <div class="wrap">
+    <button class="btn btn-red books-back" id="books-back" type="button">&larr; Back to the homepage</button>
+    <h2 id="books-view-heading" tabindex="-1">Steve's bookshelf</h2>
+    <p>The complete bookshelf — every book Steve recommends, and what he took from each one.</p>
+    <div class="book-grid" id="bookGrid"></div>
+    <div id="bookEmpty"></div>
+  </div>
+</section>
 
   <!-- FINAL CTA / CONTACT -->
   <section class="final-cta" id="contact">
@@ -564,8 +584,40 @@ footer nav a:hover{text-decoration:underline}
   }).catch(function(){});
 
   var BOOKS = [
-    // { title: "Example Title", author: "Example Author", note: "Why it is on the shelf.", cover: "" }
-  ];
+  {"title": "How to Win Friends and Influence People", "author": "Dale Carnegie", "note": ""},
+  {"title": "Confessions of an Economic Hit Man (3rd Edition)", "author": "John Perkins", "note": ""},
+  {"title": "Never Split the Difference", "author": "Chris Voss", "note": ""},
+  {"title": "The Fourth Turning", "author": "William Strauss & Neil Howe", "note": ""},
+  {"title": "The Fourth Turning Is Here", "author": "Neil Howe", "note": ""},
+  {"title": "The Intelligent Investor", "author": "Benjamin Graham", "note": ""},
+  {"title": "The Sovereign Individual", "author": "James Dale Davidson & William Rees-Mogg", "note": ""},
+  {"title": "Do Hard Things", "author": "Steve Magness", "note": ""},
+  {"title": "Spark", "author": "John J. Ratey", "note": ""},
+  {"title": "Broken Money", "author": "Lyn Alden", "note": ""},
+  {"title": "The Other Wes Moore", "author": "Wes Moore", "note": ""},
+  {"title": "Basic Economics (5th Edition)", "author": "Thomas Sowell", "note": ""},
+  {"title": "The Richest Man in Babylon", "author": "George S. Clason", "note": ""},
+  {"title": "1984", "author": "George Orwell", "note": ""},
+  {"title": "Animal Farm", "author": "George Orwell", "note": ""},
+  {"title": "Think Big and Kick Ass in Business and Life", "author": "Donald J. Trump & Bill Zanker", "note": ""},
+  {"title": "The 4-Hour Workweek", "author": "Timothy Ferriss", "note": ""},
+  {"title": "Outlive", "author": "Peter Attia", "note": ""},
+  {"title": "Can't Hurt Me", "author": "David Goggins", "note": ""},
+  {"title": "Never Finished", "author": "David Goggins", "note": ""},
+  {"title": "Conscious Coaching", "author": "Brett Bartholomew", "note": ""},
+  {"title": "12 Rules for Life", "author": "Jordan B. Peterson", "note": ""},
+  {"title": "Dopamine Nation", "author": "Anna Lembke", "note": ""},
+  {"title": "Chop Wood Carry Water", "author": "Joshua Medcalf", "note": ""},
+  {"title": "Alone at Dawn", "author": "Dan Schilling", "note": ""},
+  {"title": "The Story of Civilization I", "author": "Will Durant", "note": ""},
+  {"title": "The Story of Civilization II", "author": "Will Durant", "note": ""},
+  {"title": "The Story of Civilization III", "author": "Will Durant", "note": ""},
+  {"title": "The Story of Civilization IV", "author": "Will Durant", "note": ""},
+  {"title": "The Psychology of Money", "author": "Morgan Housel", "note": ""},
+  {"title": "Cancel Me If You Can", "author": "Dave Portnoy", "note": ""},
+  {"title": "Elon Musk", "author": "Walter Isaacson", "note": ""},
+  {"title": "Endurance", "author": "Alfred Lansing", "note": ""}
+];
   function renderBooks(){
     var grid = document.getElementById("bookGrid");
     var empty = document.getElementById("bookEmpty");
@@ -663,6 +715,29 @@ footer nav a:hover{text-decoration:underline}
       }
     });
   }
+</script>
+<script>
+  // Books view toggle (Nov 10): the browse button opens the full books view; Back returns home.
+  (function(){
+    var openBtn = document.getElementById('browse-books');
+    var backBtn = document.getElementById('books-back');
+    var heading = document.getElementById('books-view-heading');
+    function openBooks(){
+      document.body.classList.add('books-open');
+      window.scrollTo(0,0);
+      if(heading){ heading.focus({preventScroll:true}); }
+    }
+    function closeBooks(){
+      document.body.classList.remove('books-open');
+      var home = document.getElementById('books');
+      if(home){ home.scrollIntoView(); }
+    }
+    if(openBtn){ openBtn.addEventListener('click', openBooks); }
+    if(backBtn){ backBtn.addEventListener('click', closeBooks); }
+    document.querySelectorAll('a[href^="#"]').forEach(function(a){
+      a.addEventListener('click', function(){ document.body.classList.remove('books-open'); });
+    });
+  })();
 </script>
 </body>
 </html>

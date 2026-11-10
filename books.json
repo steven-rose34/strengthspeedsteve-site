@@ -1,3 +1,169 @@
 {
-  "books": []
+  "books": [
+    {
+      "title": "How to Win Friends and Influence People",
+      "author": "Dale Carnegie",
+      "note": ""
+    },
+    {
+      "title": "Confessions of an Economic Hit Man (3rd Edition)",
+      "author": "John Perkins",
+      "note": ""
+    },
+    {
+      "title": "Never Split the Difference",
+      "author": "Chris Voss",
+      "note": ""
+    },
+    {
+      "title": "The Fourth Turning",
+      "author": "William Strauss & Neil Howe",
+      "note": ""
+    },
+    {
+      "title": "The Fourth Turning Is Here",
+      "author": "Neil Howe",
+      "note": ""
+    },
+    {
+      "title": "The Intelligent Investor",
+      "author": "Benjamin Graham",
+      "note": ""
+    },
+    {
+      "title": "The Sovereign Individual",
+      "author": "James Dale Davidson & William Rees-Mogg",
+      "note": ""
+    },
+    {
+      "title": "Do Hard Things",
+      "author": "Steve Magness",
+      "note": ""
+    },
+    {
+      "title": "Spark",
+      "author": "John J. Ratey",
+      "note": ""
+    },
+    {
+      "title": "Broken Money",
+      "author": "Lyn Alden",
+      "note": ""
+    },
+    {
+      "title": "The Other Wes Moore",
+      "author": "Wes Moore",
+      "note": ""
+    },
+    {
+      "title": "Basic Economics (5th Edition)",
+      "author": "Thomas Sowell",
+      "note": ""
+    },
+    {
+      "title": "The Richest Man in Babylon",
+      "author": "George S. Clason",
+      "note": ""
+    },
+    {
+      "title": "1984",
+      "author": "George Orwell",
+      "note": ""
+    },
+    {
+      "title": "Animal Farm",
+      "author": "George Orwell",
+      "note": ""
+    },
+    {
+      "title": "Think Big and Kick Ass in Business and Life",
+      "author": "Donald J. Trump & Bill Zanker",
+      "note": ""
+    },
+    {
+      "title": "The 4-Hour Workweek",
+      "author": "Timothy Ferriss",
+      "note": ""
+    },
+    {
+      "title": "Outlive",
+      "author": "Peter Attia",
+      "note": ""
+    },
+    {
+      "title": "Can't Hurt Me",
+      "author": "David Goggins",
+      "note": ""
+    },
+    {
+      "title": "Never Finished",
+      "author": "David Goggins",
+      "note": ""
+    },
+    {
+      "title": "Conscious Coaching",
+      "author": "Brett Bartholomew",
+      "note": ""
+    },
+    {
+      "title": "12 Rules for Life",
+      "author": "Jordan B. Peterson",
+      "note": ""
+    },
+    {
+      "title": "Dopamine Nation",
+      "author": "Anna Lembke",
+      "note": ""
+    },
+    {
+      "title": "Chop Wood Carry Water",
+      "author": "Joshua Medcalf",
+      "note": ""
+    },
+    {
+      "title": "Alone at Dawn",
+      "author": "Dan Schilling",
+      "note": ""
+    },
+    {
+      "title": "The Story of Civilization I",
+      "author": "Will Durant",
+      "note": ""
+    },
+    {
+      "title": "The Story of Civilization II",
+      "author": "Will Durant",
+      "note": ""
+    },
+    {
+      "title": "The Story of Civilization III",
+      "author": "Will Durant",
+      "note": ""
+    },
+    {
+      "title": "The Story of Civilization IV",
+      "author": "Will Durant",
+      "note": ""
+    },
+    {
+      "title": "The Psychology of Money",
+      "author": "Morgan Housel",
+      "note": ""
+    },
+    {
+      "title": "Cancel Me If You Can",
+      "author": "Dave Portnoy",
+      "note": ""
+    },
+    {
+      "title": "Elon Musk",
+      "author": "Walter Isaacson",
+      "note": ""
+    },
+    {
+      "title": "Endurance",
+      "author": "Alfred Lansing",
+      "note": ""
+    }
+  ]
 }
