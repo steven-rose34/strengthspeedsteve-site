@@ -1,0 +1,58 @@
+name: Add SSS TRAINING LOG offer card
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  add-card:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Insert SSS TRAINING LOG card into index.html
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          p = pathlib.Path("index.html")
+          html = p.read_text(encoding="utf-8")
+          marker = "data-sss-training-log"
+          url = "https://marketplace.trainheroic.com/workout-plan/team/sss-training-log"
+          if marker in html:
+              print("Marker already present; no change needed.")
+              raise SystemExit(0)
+          card = """<article data-sss-training-log="1" style="max-width:720px;margin:24px auto 0;padding:22px;border:1px solid #d9d9d9;border-radius:14px;background:#ffffff;color:#111111;text-align:left;font-family:inherit;">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;">
+              <h3 style="margin:0;font-size:22px;letter-spacing:.04em;">SSS TRAINING LOG</h3>
+              <span style="background:#c8102e;color:#ffffff;font-weight:700;font-size:12px;letter-spacing:.08em;padding:5px 9px;border-radius:999px;">7 DAYS FREE</span>
+            </div>
+            <p style="margin:12px 0 4px;"><strong style="font-size:32px;">$15</strong><span style="font-size:16px;">/mo</span></p>
+            <p style="margin:6px 0 16px;font-size:16px;line-height:1.5;">My own training, posted as I train it. Follow along and log every session in the app.</p>
+            <a href="https://marketplace.trainheroic.com/workout-plan/team/sss-training-log" style="display:inline-block;background:#111111;color:#ffffff;border:2px solid #c8102e;padding:11px 18px;border-radius:10px;text-decoration:none;font-weight:700;letter-spacing:.02em;">Follow Along on TrainHeroic</a>
+          </article>"""
+          anchor = '      <p class="offer-micro">Your first session is ready when you are.</p>\n    </div>'
+          if html.count(anchor) == 1:
+              html = html.replace(anchor, anchor + "\n" + card, 1)
+              print("Inserted card immediately after the SSS COMPLETE offer card.")
+          else:
+              start = html.index('id="training"')
+              close = html.index("</section>", start)
+              html = html[:close] + card + "\n" + html[close:]
+              print("Anchor not unique; fell back to inserting before the Training section closing tag.")
+          assert html.count(marker) == 1, "marker count is not 1"
+          assert html.count(url) == 1, "training log URL count is not 1"
+          p.write_text(html, encoding="utf-8")
+          print("Assertions passed: marker and URL each appear exactly once.")
+          PY
+      - name: Commit and push index.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Add SSS TRAINING LOG offer card"
+            git push
+          fi
