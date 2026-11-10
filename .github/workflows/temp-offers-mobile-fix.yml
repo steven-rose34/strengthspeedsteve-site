@@ -8,35 +8,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Diagnose current Training offers markup and CSS
+      - name: Diagnose Training offers section in detail
         run: |
           python3 - <<'PY'
           import pathlib
           p = pathlib.Path("index.html")
-          s = p.read_text(encoding="utf-8")
-          print("LEN", len(s))
-          cands = ["SSS COMPLETE", "SSS Complete", "SSS TRAINING LOG", "SSS Training Log", "Start Training", "offer-card", "offer-card-log", "offer-card-featured", "offer-name", "offer-price", "offer-sub", "offer-list", "offer-tag", "offer-badge", "offer-cta", "offers-grid", "font-weight:600", "font-weight:700", "font-weight:800", "font-weight:400", "$30", "$15", "7 days free", "</style>", "860", "TrainHeroic"]
-          for c in cands:
-              print("COUNT", repr(c), "=", s.count(c))
-          print("=== OFFER LINES ===")
-          n = 0
-          for i, line in enumerate(s.splitlines(), 1):
-              if "offer" in line.lower():
-                  n += 1
-                  print(i, line.strip()[:400])
-          print("TOTAL OFFER LINES", n)
-          print("=== MEDIA 860 LINES ===")
-          for i, line in enumerate(s.splitlines(), 1):
-              if "860" in line or "max-width" in line:
-                  print(i, line.strip()[:300])
-          print("=== TRAINING SECTION ===")
-          k = s.find('id="training"')
-          print("training anchor index:", k)
-          if k >= 0:
-              print(s[k:k+7000])
-          else:
-              print("id=training NOT FOUND")
-          print("DIAGNOSTIC DONE - no changes written")
+          lines = p.read_text(encoding="utf-8").splitlines()
+          print("TOTAL LINES", len(lines))
+          def show(a, b, title):
+              print("=== " + title + " ===")
+              for i in range(a, min(b, len(lines))):
+                  print(i + 1, lines[i])
+          show(99, 122, "OFFER CSS 100-122")
+          show(181, 196, "OFFERS GRID CSS 182-196")
+          show(250, 300, "TRAINING HTML 251-300")
+          print("=== FONT-WEIGHT 600 LINES ===")
+          for i, line in enumerate(lines, 1):
+              if "font-weight:600" in line or "font-weight: 600" in line:
+                  print(i, line.strip()[:250])
+          print("=== STRONG LINES ===")
+          for i, line in enumerate(lines, 1):
+              if "<strong" in line:
+                  print(i, line.strip()[:250])
+          print("=== SECTION PADDING LINES ===")
+          for i, line in enumerate(lines, 1):
+              if ".section{" in line or ".section-head{" in line:
+                  print(i, line.strip()[:250])
+          print("DIAG2 DONE - no changes written")
           PY
       - name: Commit patch
         run: |
