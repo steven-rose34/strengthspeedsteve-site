@@ -8,34 +8,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Probe file structure
+      - name: Probe file structure 2
         run: |
           python3 - <<'PY'
           import pathlib, re
           s = pathlib.Path("index.html").read_text(encoding="utf-8")
-          print("LEN", len(s))
-          for pat in ["FALLBACK", "fallback", "posts.json", "books.json"]:
-              ms = list(re.finditer(re.escape(pat), s))
-              print("PAT", pat, "count", len(ms))
-              for m in ms[:4]:
-                  print("  CTX:", repr(s[max(0, m.start() - 80):m.end() + 120]))
-          print("DECLS")
-          for m in re.finditer(r"(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=", s):
-              n = m.group(1)
-              if any(k in n.upper() for k in ("POST", "BOOK", "FALL", "DEFAULT", "EMBED")):
-                  print("  ", n, repr(s[m.start():m.start() + 100]))
-          print("FUNCS")
-          for m in re.finditer(r"function\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*\(", s):
-              n = m.group(1)
-              if any(k in n.lower() for k in ("post", "book", "render", "load")):
-                  print("  ", n)
-          print("CSCS")
-          for m in list(re.finditer(r"CSCS", s))[:4]:
-              print("  CTX:", repr(s[max(0, m.start() - 60):m.end() + 160]))
-          KEEP_ABOUT_RE = re.compile(r"Steve Rose, M\.S\., CSCS(?:\s|<[^>]+>|&mdash;|&#8212;|&nbsp;|\u2014|\u2013|-)*Assistant Performance Coach at Princeton University\.?", re.S)
-          print("KEEP_ABOUT count", len(KEEP_ABOUT_RE.findall(s)))
-          print("OLD_ABOUT count", s.count("SSS COMPLETE isn't a template"))
-          print("PROBE_DONE")
+          i = s.find("function renderPosts")
+          print("renderPosts at", i)
+          print(repr(s[i:i+3500]))
+          j = s.find("var BOOKS")
+          print("var BOOKS at", j)
+          print(repr(s[j:j+600]))
+          print("POSTS tokens:", len(list(re.finditer(r"POSTS", s))))
+          for m in list(re.finditer(r"POSTS", s))[:10]:
+              print("  ", repr(s[max(0, m.start()-60):m.end()+80]))
+          print("fetch calls:")
+          for m in re.finditer(r"fetch\(", s):
+              print("  ", repr(s[max(0, m.start()-60):m.end()+120]))
+          print("PROBE2_DONE")
           PY
       - name: Commit patch
         run: |
