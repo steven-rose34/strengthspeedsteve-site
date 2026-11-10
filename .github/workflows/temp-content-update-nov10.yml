@@ -8,24 +8,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Probe file structure 2
+      - name: Probe file structure 3
         run: |
           python3 - <<'PY'
           import pathlib, re
           s = pathlib.Path("index.html").read_text(encoding="utf-8")
-          i = s.find("function renderPosts")
-          print("renderPosts at", i)
-          print(repr(s[i:i+3500]))
-          j = s.find("var BOOKS")
-          print("var BOOKS at", j)
-          print(repr(s[j:j+600]))
-          print("POSTS tokens:", len(list(re.finditer(r"POSTS", s))))
-          for m in list(re.finditer(r"POSTS", s))[:10]:
-              print("  ", repr(s[max(0, m.start()-60):m.end()+80]))
-          print("fetch calls:")
-          for m in re.finditer(r"fetch\(", s):
-              print("  ", repr(s[max(0, m.start()-60):m.end()+120]))
-          print("PROBE2_DONE")
+          for m in re.finditer(r"ARTICLES\s*=", s):
+              print("ARTICLES_ASSIGN at", m.start(), repr(s[max(0, m.start()-120):m.start()+200]))
+          print("ARTICLES count", len(list(re.finditer(r"ARTICLES", s))))
+          print("title counts:", s.count("Welcome to Strength Speed Steve"), s.count("Speed Training 101"))
+          k = s.find("var BOOKS")
+          print("var BOOKS exact:", repr(s[k:k+220]))
+          i = s.find("renderBooks();")
+          print("books fetch area:", repr(s[i:i+800]))
+          print("PROBE3_DONE")
           PY
       - name: Commit patch
         run: |
