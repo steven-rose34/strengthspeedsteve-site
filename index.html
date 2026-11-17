@@ -9,6 +9,13 @@
 <meta property="og:description" content="Get stronger and faster with a real plan. SSS COMPLETE on TrainHeroic — 7-day free trial, then $30/mo." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://strengthspeedsteve.com" />
+<meta property="og:image" content="https://strengthspeedsteve.com/og-image.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="SSS COMPLETE — Start 7 Days Free on TrainHeroic" />
+<meta name="twitter:description" content="Get stronger and faster with a real plan. SSS COMPLETE on TrainHeroic — 7-day free trial, then $30/mo." />
+<meta name="twitter:image" content="https://strengthspeedsteve.com/og-image.jpg" />
 <title>Strength Speed Steve | SSS COMPLETE — Start 7 Days Free on TrainHeroic</title>
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -39,7 +46,7 @@ button{font-family:inherit;cursor:pointer}
 /* Header */
 header.site-header{position:sticky;top:0;z-index:90;background:var(--navy);color:#fff;box-shadow:0 2px 14px rgba(0,0,0,.3)}
 .header-main{display:flex;align-items:center;justify-content:space-between;max-width:1080px;margin:0 auto;padding:10px 16px;min-height:64px;gap:12px}
-.brand{text-decoration:none;color:#fff;line-height:1.1}
+.brand{text-decoration:none;color:#fff;line-height:1.1;position:relative;padding-left:54px}.brand-logo{position:absolute;left:0;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%}
 .brand-name{display:block;font-size:16px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
 .brand-sub{display:block;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#bdbdbd;font-weight:600;margin-top:3px}
 nav.primary-nav{display:none;gap:4px}
@@ -235,6 +242,7 @@ footer nav a:hover{text-decoration:underline}
 <header class="site-header">
   <div class="header-main">
     <a class="brand" href="#top" aria-label="Strength Speed Steve — home">
+      <img class="brand-logo" src="/apple-touch-icon.png" alt="" width="42" height="42" />
       <span class="brand-name">Strength Speed Steve</span>
       <span class="brand-sub">Steve Rose, M.S., CSCS</span>
     </a>
@@ -486,6 +494,10 @@ footer nav a:hover{text-decoration:underline}
   function renderPosts(){
     var grid = document.getElementById("postGrid");
     if(!grid) return;
+    var hasPosts = Object.keys(ARTICLES).length > 0;
+    var blogSec = document.getElementById("blog");
+    if(blogSec) blogSec.style.display = hasPosts ? "" : "none";
+    document.querySelectorAll('a[href="#blog"]').forEach(function(n){ n.style.display = hasPosts ? "" : "none"; });
     grid.innerHTML = "";
     Object.keys(ARTICLES).forEach(function(key){
       var art = ARTICLES[key];
