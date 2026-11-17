@@ -255,6 +255,9 @@ footer nav a:hover{text-decoration:underline}
 .book-item h3{font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.25;margin:0 0 3px}
 .book-item .book-author{font-size:12px}
 .book-item .book-note{font-size:14px;margin-top:5px}
+.book-item{display:flex;gap:14px;align-items:flex-start}
+.book-thumb{width:44px;height:66px;object-fit:cover;border-radius:4px;flex:none;background:#e8e8e8}
+.book-text{flex:1;min-width:0;padding-top:2px}
 </style>
 </head>
 <body>
@@ -639,6 +642,40 @@ footer nav a:hover{text-decoration:underline}
     {"title": "Elon Musk", "author": "Walter Isaacson", "note": "", "cover": ""},
     {"title": "Endurance", "author": "Alfred Lansing", "note": "", "cover": ""}
   ];
+  var COVERS = {
+    "How to Win Friends and Influence People": "/covers/how-to-win-friends-and-influence-people.jpg",
+    "Confessions of an Economic Hit Man (3rd Edition)": "/covers/confessions-of-an-economic-hit-man.jpg",
+    "Never Split the Difference": "/covers/never-split-the-difference.jpg",
+    "The Fourth Turning": "/covers/the-fourth-turning.jpg",
+    "The Fourth Turning Is Here": "/covers/the-fourth-turning-is-here.jpg",
+    "The Intelligent Investor": "/covers/the-intelligent-investor.jpg",
+    "The Sovereign Individual": "/covers/the-sovereign-individual.jpg",
+    "Do Hard Things": "/covers/do-hard-things.jpg",
+    "Spark": "/covers/spark.jpg",
+    "Broken Money": "/covers/broken-money.jpg",
+    "The Other Wes Moore": "/covers/the-other-wes-moore.jpg",
+    "Basic Economics (5th Edition)": "/covers/basic-economics.jpg",
+    "The Richest Man in Babylon": "/covers/the-richest-man-in-babylon.jpg",
+    "1984": "/covers/1984.jpg",
+    "Animal Farm": "/covers/animal-farm.jpg",
+    "Think Big and Kick Ass in Business and Life": "/covers/think-big-and-kick-ass-in-business-and-life.jpg",
+    "The 4-Hour Workweek": "/covers/the-4-hour-workweek.jpg",
+    "Outlive": "/covers/outlive.jpg",
+    "Can't Hurt Me": "/covers/can-t-hurt-me.jpg",
+    "Never Finished": "/covers/never-finished.jpg",
+    "Conscious Coaching": "/covers/conscious-coaching.jpg",
+    "12 Rules for Life": "/covers/12-rules-for-life.jpg",
+    "Dopamine Nation": "/covers/dopamine-nation.jpg",
+    "Chop Wood Carry Water": "/covers/chop-wood-carry-water.jpg",
+    "Alone at Dawn": "/covers/alone-at-dawn.jpg",
+    "The Story of Civilization I": "/covers/the-story-of-civilization-i.jpg",
+    "The Story of Civilization II": "/covers/the-story-of-civilization-ii.jpg",
+    "The Story of Civilization III": "/covers/the-story-of-civilization-iii.jpg",
+    "The Story of Civilization IV": "/covers/the-story-of-civilization-iv.jpg",
+    "The Psychology of Money": "/covers/the-psychology-of-money.jpg",
+    "Elon Musk": "/covers/elon-musk.jpg",
+    "Endurance": "/covers/endurance.jpg"
+  };
   function renderBooks(){
     var grid = document.getElementById("bookGrid");
     var empty = document.getElementById("bookEmpty");
@@ -666,19 +703,28 @@ footer nav a:hover{text-decoration:underline}
     BOOKS.forEach(function(book){
       var card = document.createElement("div");
       card.className = "book-item";
+      var coverSrc = book.cover || COVERS[book.title] || "";
+      if(coverSrc){
+        var thumb = document.createElement("img");
+        thumb.className = "book-thumb"; thumb.src = coverSrc; thumb.alt = ""; thumb.loading = "lazy";
+        card.appendChild(thumb);
+      }
+      var bt = document.createElement("div");
+      bt.className = "book-text";
       var title = document.createElement("h3");
       title.textContent = book.title;
-      card.appendChild(title);
+      bt.appendChild(title);
       if(book.author){
         var author = document.createElement("p");
         author.className = "book-author"; author.textContent = book.author;
-        card.appendChild(author);
+        bt.appendChild(author);
       }
       if(book.note){
         var note = document.createElement("p");
         note.className = "book-note"; note.textContent = book.note;
-        card.appendChild(note);
+        bt.appendChild(note);
       }
+      card.appendChild(bt);
       grid.appendChild(card);
     });
   }
