@@ -1,0 +1,43 @@
+name: Patch favicon links
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch-favicon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Insert favicon links into index.html
+        run: |
+          python3 - <<'PY'
+          import sys
+          path = "index.html"
+          text = open(path, encoding="utf-8").read()
+          assert 'rel="icon"' not in text, 'rel="icon" already present in index.html'
+          marker = '<title>Strength Speed Steve | Strength & Speed Coaching on TrainHeroic</title>'
+          assert text.count(marker) == 1, f"marker appears {text.count(marker)} times, expected exactly once"
+          lines = text.splitlines(keepends=True)
+          out = []
+          inserted = False
+          for line in lines:
+              out.append(line)
+              if not inserted and marker in line:
+                  out.append('<link rel="icon" href="/favicon.ico" sizes="any" />\n')
+                  out.append('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />\n')
+                  inserted = True
+          assert inserted, "marker line not found"
+          open(path, "w", encoding="utf-8").write("".join(out))
+          print("Inserted favicon links after title line")
+          PY
+      - name: Commit and push index.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add favicon links to index.html"
+            git push
+          fi
