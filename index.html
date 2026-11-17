@@ -14,12 +14,12 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800;900&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
 :root{
   --black:#000; --navy:#111; --accent:#e10600; --accent-dark:#b00500;
   --bg:#fff; --surface:#f4f4f4; --ink:#141414; --ink-soft:#4a4a4a; --line:#ddd;
-  --radius:14px; --serif:"Source Serif 4",Georgia,serif; --sans:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --radius:14px; --serif:"Archivo","Inter",sans-serif; --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root{ --bg:#0a0a0a; --surface:#161616; --ink:#f5f5f5; --ink-soft:#c9c9c9; --line:#2e2e2e; }
@@ -75,7 +75,7 @@ body.locked{overflow:hidden}
 .hero-layout{display:grid}
 .hero-text{padding:36px 20px 32px;max-width:1080px;margin:0 auto;width:100%}
 .hero-tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:var(--accent);padding:7px 12px;border-radius:999px;margin:0 0 18px}
-.hero h1{font-family:var(--serif);font-weight:600;font-size:clamp(38px,8vw,62px);line-height:1.06;margin:0 0 14px}
+.hero h1{font-family:var(--serif);font-weight:800;font-size:clamp(38px,8vw,62px);line-height:1.06;margin:0 0 14px}
 .hero h1 .accent{color:var(--accent)}
 .hero p.lede{font-size:19px;line-height:1.55;color:#f2f2f2;margin:0 0 22px;max-width:32em}
 .hero-actions{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
@@ -97,7 +97,7 @@ section.block.alt{background:var(--surface)}
 section.block.slim{padding:40px 0}
 .section-tag{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
 .section-head{max-width:680px;margin-bottom:24px}
-.section-head h2{font-family:var(--serif);font-weight:600;font-size:clamp(30px,6vw,42px);line-height:1.12;margin:0 0 10px}
+.section-head h2{font-family:var(--serif);font-weight:800;font-size:clamp(30px,6vw,42px);line-height:1.12;margin:0 0 10px}
 .section-head p{margin:0;color:var(--ink-soft);font-size:17px}
 
 /* Offer */
@@ -119,7 +119,7 @@ figure.media figcaption{background:#000;color:#fff;padding:12px 16px;font-size:1
 
 /* Steps */
 .steps-head{margin:44px 0 14px}
-.steps-head h3{font-family:var(--serif);font-weight:600;font-size:26px;margin:0}
+.steps-head h3{font-family:var(--serif);font-weight:800;font-size:26px;margin:0}
 .steps{display:grid;gap:10px}
 @media(min-width:760px){ .steps{grid-template-columns:repeat(3,1fr)} }
 .step{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--bg)}
@@ -155,7 +155,7 @@ figure.media figcaption{background:#000;color:#fff;padding:12px 16px;font-size:1
 
 /* Final CTA */
 .final-cta{background:#000;color:#fff;padding:64px 0}
-.final-cta h2{font-family:var(--serif);font-weight:600;font-size:clamp(34px,7vw,54px);line-height:1.1;margin:0 0 14px;max-width:16em}
+.final-cta h2{font-family:var(--serif);font-weight:800;font-size:clamp(34px,7vw,54px);line-height:1.1;margin:0 0 14px;max-width:16em}
 .final-cta h2 .accent{color:var(--accent)}
 .final-cta p{color:#e8e8e8;font-size:18px;margin:0 0 26px;max-width:34em}
 .final-actions{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
@@ -176,7 +176,7 @@ footer nav a:hover{text-decoration:underline}
 .reader .overlay-title{color:var(--ink-soft)}
 .reader .close-btn{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
 .reader-body{max-width:720px;margin:0 auto;padding:26px 20px 60px}
-.reader-body h2{font-family:var(--serif);font-weight:600;font-size:clamp(30px,7vw,42px);line-height:1.15;margin:0 0 16px}
+.reader-body h2{font-family:var(--serif);font-weight:800;font-size:clamp(30px,7vw,42px);line-height:1.15;margin:0 0 16px}
 .reader-body img{border-radius:var(--radius);margin:6px 0 22px;width:100%;max-height:420px;object-fit:cover}
 .reader-body p{font-size:18px;line-height:1.7;margin:0 0 18px}
 .reader-body h3{font-size:21px;font-weight:800;margin:26px 0 10px}
@@ -351,7 +351,7 @@ footer nav a:hover{text-decoration:underline}
       <div class="split">
         <div class="about-copy">
           <p class="section-tag">Why Steve</p>
-          <h2 style="font-family:var(--serif);font-weight:600;font-size:clamp(30px,6vw,42px);line-height:1.12;margin:0 0 14px;">The coach behind the plan</h2>
+          <h2 style="font-family:var(--serif);font-weight:800;font-size:clamp(30px,6vw,42px);line-height:1.12;margin:0 0 14px;">The coach behind the plan</h2>
           <p><strong style="color:var(--ink)">Steve Rose, M.S., CSCS</strong> — Assistant Performance Coach at Princeton University.</p>
           <p>He's currently an Assistant Performance Coach at Princeton University. Before that, he was a high school strength & conditioning coach and a personal trainer, and over his career he's worked with everyone between the ages of 8 and 80. His coaching is simple: teach the lifts properly, lift heavy, sprint, and repeat it long enough to get good at it. SSS COMPLETE puts that coaching in the TrainHeroic app — join the team, and you train the way he does.</p>
           <div class="chips" aria-label="Credentials">
