@@ -15,7 +15,7 @@ jobs:
           path = "index.html"
           text = open(path, encoding="utf-8").read()
           assert 'rel="icon"' not in text, 'rel="icon" already present in index.html'
-          marker = '<title>Strength Speed Steve | Strength & Speed Coaching on TrainHeroic</title>'
+          marker = '<title>Strength Speed Steve | SSS COMPLETE — Start 7 Days Free on TrainHeroic</title>'
           assert text.count(marker) == 1, f"marker appears {text.count(marker)} times, expected exactly once"
           lines = text.splitlines(keepends=True)
           out = []
