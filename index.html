@@ -249,6 +249,12 @@ footer nav a:hover{text-decoration:underline}
 .capture-row input[type=email]{flex:1 1 240px;max-width:340px;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;font:inherit}
 .capture-note{font-size:13px;opacity:.75;margin-top:12px}
 .capture .hp{position:absolute;left:-9999px;top:-9999px}
+.book-grid{display:grid;gap:0}
+@media(min-width:860px){.book-grid{grid-template-columns:1fr 1fr;column-gap:44px}}
+.book-item{padding:13px 2px;border-bottom:1px solid var(--line)}
+.book-item h3{font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.25;margin:0 0 3px}
+.book-item .book-author{font-size:12px}
+.book-item .book-note{font-size:14px;margin-top:5px}
 </style>
 </head>
 <body>
@@ -420,7 +426,7 @@ footer nav a:hover{text-decoration:underline}
   <div class="wrap">
     <button class="btn btn-red books-back" id="books-back" type="button">&larr; Back to the homepage</button>
     <h2 id="books-view-heading" tabindex="-1">Steve's bookshelf</h2>
-    <p>The complete bookshelf — every book Steve recommends, and what he took from each one.</p>
+    <p>The complete bookshelf — every book Steve recommends.</p>
     <div class="book-grid" id="bookGrid"></div>
     <div id="bookEmpty"></div>
   </div>
@@ -659,31 +665,20 @@ footer nav a:hover{text-decoration:underline}
     }
     BOOKS.forEach(function(book){
       var card = document.createElement("div");
-      card.className = "book-card";
-      var cover = document.createElement("div");
-      cover.className = "book-cover";
-      if(book.cover){
-        cover.classList.add("has-img");
-        var cimg = document.createElement("img");
-        cimg.src = book.cover;
-        cimg.alt = "Cover of " + book.title + " by " + book.author;
-        cover.appendChild(cimg);
-      } else {
-        cover.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>';
-        var ct = document.createElement("span");
-        ct.className = "bc-title"; ct.textContent = book.title;
-        cover.appendChild(ct);
-      }
-      var bbody = document.createElement("div");
-      bbody.className = "book-card-body";
-      var author = document.createElement("p");
-      author.className = "book-author"; author.textContent = book.author;
+      card.className = "book-item";
       var title = document.createElement("h3");
       title.textContent = book.title;
-      var note = document.createElement("p");
-      note.className = "book-note"; note.textContent = book.note;
-      bbody.appendChild(author); bbody.appendChild(title); bbody.appendChild(note);
-      card.appendChild(cover); card.appendChild(bbody);
+      card.appendChild(title);
+      if(book.author){
+        var author = document.createElement("p");
+        author.className = "book-author"; author.textContent = book.author;
+        card.appendChild(author);
+      }
+      if(book.note){
+        var note = document.createElement("p");
+        note.className = "book-note"; note.textContent = book.note;
+        card.appendChild(note);
+      }
       grid.appendChild(card);
     });
   }
