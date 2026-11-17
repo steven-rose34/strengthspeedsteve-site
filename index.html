@@ -243,6 +243,12 @@ footer nav a:hover{text-decoration:underline}
   body.books-open main>section:not(#books-view){display:none}
   body.books-open footer{display:none}
   .books-back{margin-bottom:18px}
+.capture{margin-top:36px;max-width:580px;border-top:1px solid rgba(255,255,255,.18);padding-top:26px}
+.capture h3{font-family:var(--serif);font-weight:800;font-size:clamp(22px,3.4vw,30px);margin:0 0 10px;line-height:1.15}
+.capture-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.capture-row input[type=email]{flex:1 1 240px;max-width:340px;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;font:inherit}
+.capture-note{font-size:13px;opacity:.75;margin-top:12px}
+.capture .hp{position:absolute;left:-9999px;top:-9999px}
 </style>
 </head>
 <body>
@@ -428,6 +434,24 @@ footer nav a:hover{text-decoration:underline}
       <div class="final-actions">
         <a class="btn btn-red btn-lg" href="https://marketplace.trainheroic.com/workout-plan/team/sss-complete" data-th-link target="_blank" rel="noopener">Start Training on TrainHeroic ↗</a>
         <a class="btn btn-outline" href="https://www.instagram.com/strengthspeedsteve/" target="_blank" rel="noopener">Message on Instagram</a>
+      </div>
+      <div class="capture" id="free-week">
+        <h3>Not ready yet? <span class="accent">Start with a free week.</span></h3>
+        <p>Get one real week of SSS COMPLETE programming as a PDF — the same lifts, conditioning, and coaching notes my athletes train. Enter your email and it's yours instantly.</p>
+        <form name="sample-week" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="sampleWeekForm">
+          <input type="hidden" name="form-name" value="sample-week">
+          <p class="hp"><label>Don't fill this out: <input name="bot-field"></label></p>
+          <div class="capture-row">
+            <input type="email" name="email" required placeholder="Your email address" aria-label="Email address">
+            <button class="btn btn-red" type="submit">Send me the free week</button>
+          </div>
+          <p class="capture-note">One PDF, no spam, no obligation. Unsubscribe anytime.</p>
+        </form>
+        <div class="capture-success" id="sampleWeekSuccess" hidden>
+          <p><strong>You're in.</strong> Your free week is ready:</p>
+          <p><a class="btn btn-red" href="/free-week.pdf" download>Download your free week (PDF)</a></p>
+          <p class="capture-note">Train it this week — then come back and start your free 7 days in the app.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -729,6 +753,19 @@ footer nav a:hover{text-decoration:underline}
       a.addEventListener('click', function(){ document.body.classList.remove('books-open'); });
     });
   })();
+</script>
+<script>
+(function(){
+  var f = document.getElementById('sampleWeekForm');
+  if(!f) return;
+  f.addEventListener('submit', function(e){
+    e.preventDefault();
+    var data = new URLSearchParams(new FormData(f)).toString();
+    fetch('/', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:data})
+      .then(function(){ f.hidden = true; document.getElementById('sampleWeekSuccess').hidden = false; })
+      .catch(function(){ f.submit(); });
+  });
+})();
 </script>
 </body>
 </html>
