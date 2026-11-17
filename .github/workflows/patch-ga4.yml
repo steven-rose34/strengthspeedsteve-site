@@ -1,0 +1,56 @@
+name: Patch GA4
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-ga4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index.html with GA4 and Search Console verification
+        shell: python
+        run: |
+          from pathlib import Path
+          import sys
+          p = Path("index.html")
+          text = p.read_text(encoding="utf-8")
+          anchor = '<link rel="apple-touch-icon" href="/apple-touch-icon.png" />'
+          count = text.count(anchor)
+          if count != 1:
+              print(f"ERROR: anchor occurs {count} times, expected exactly 1; aborting without changes", file=sys.stderr)
+              sys.exit(1)
+          if "G-RDDQSVTCCP" in text:
+              print("ERROR: Measurement ID G-RDDQSVTCCP already present; aborting without changes", file=sys.stderr)
+              sys.exit(1)
+          if "oI0MYLyUDaumIGyOZEhX7xCuGpWfrW4Spmlrr3xI1H4" in text:
+              print("ERROR: google-site-verification value already present; aborting without changes", file=sys.stderr)
+              sys.exit(1)
+          addition = (
+              anchor
+              + '\n<meta name="google-site-verification" content="oI0MYLyUDaumIGyOZEhX7xCuGpWfrW4Spmlrr3xI1H4" />'
+              + '\n<!-- Google tag (gtag.js) -->'
+              + '\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-RDDQSVTCCP"></script>'
+              + '\n<script>'
+              + '\n  window.dataLayer = window.dataLayer || [];'
+              + '\n  function gtag(){dataLayer.push(arguments);}'
+              + "\n  gtag('js', new Date());"
+              + "\n  gtag('config', 'G-RDDQSVTCCP');"
+              + '\n</script>'
+          )
+          p.write_text(text.replace(anchor, addition, 1), encoding="utf-8")
+          print("Patched index.html: added google-site-verification meta tag and GA4 gtag for G-RDDQSVTCCP")
+      - name: Commit patched index.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Add GA4 (G-RDDQSVTCCP) and Google Search Console verification to index.html"
+          git push
